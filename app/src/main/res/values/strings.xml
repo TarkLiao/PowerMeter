@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">    BLE_APP</string>
+    <string name="Title_Energy">Energy</string>
+    <string name="Title_Watt">  Watt</string>
+    <string name="Title_Volt">  Volt</string>
+    <string name="Title_Amp">   Amp</string>
+    <string name="Unit_Energy"> KWH</string>
+    <string name="Unit_Watt">   W  </string>
+    <string name="Unit_Volt">   V  </string>
+    <string name="Unit_Amp">    A  </string>
+
+
+</resources>
