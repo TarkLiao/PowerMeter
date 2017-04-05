@@ -567,7 +567,7 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             //  進行Connect後，停止Scan
-                            if (mScanning) {
+                            if (mScanning && mBluetoothAdapter.isEnabled()) {
                                 mBluetoothLeScanner.stopScan(ScanCallback);
 //                                Toast.makeText(MainActivity.this, "Scan finish", Toast.LENGTH_LONG).show();
                                 mScanning = false;
@@ -1069,10 +1069,17 @@ public class MainActivity extends AppCompatActivity {
                 mHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        mBluetoothLeScanner.stopScan(ScanCallback);
-                        if (mScanning) {
+                        if (mBluetoothAdapter.isEnabled()) {
+                            mBluetoothLeScanner.stopScan(ScanCallback);
+                            if (mScanning) {
+                                Toast.makeText(MainActivity.this,
+                                        "Scan Off",
+                                        Toast.LENGTH_LONG).show();
+                                mScanning = false;
+                            }
+                        } else {
                             Toast.makeText(MainActivity.this,
-                                    "Scan Off",
+                                    "Bluetooth is close",
                                     Toast.LENGTH_LONG).show();
                             mScanning = false;
                         }
@@ -1083,7 +1090,9 @@ public class MainActivity extends AppCompatActivity {
                 mScanning = true;
             }
         } else {
-            mBluetoothLeScanner.stopScan(ScanCallback);
+            if (mBluetoothAdapter.isEnabled()) {
+                mBluetoothLeScanner.stopScan(ScanCallback);
+            }
             mScanning = false;
         }
     }
