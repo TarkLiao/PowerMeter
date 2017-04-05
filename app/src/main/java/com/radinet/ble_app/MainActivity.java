@@ -70,13 +70,17 @@ import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
 
-    /**宣告常數**/
+    /**
+     * 宣告常數
+     **/
     private final int MAX_ENERGE = 999;
     private final int MAX_VOLT = 240;
     private final int MAX_AMP = 50;
     private final int MIN_VALUE = 0;
 
-    /**宣告各Button**/
+    /**
+     * 宣告各Button
+     **/
     private ImageButton Button_Scan;
     private ImageButton Button_Value;
     private ImageButton Button_Setting;
@@ -89,13 +93,19 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton Button_Amp_Max_Sub;
     private ImageButton Button_Amp_Max_Add;
 
-    /**宣告Button OnClick後的行為**/
+    /**
+     * 宣告Button OnClick後的行為
+     **/
     private ButtonPressListener ButtonPressListen;
 
-    /**宣告Display用的主Page**/
+    /**
+     * 宣告Display用的主Page
+     **/
     private RelativeLayout Layout_Display;
 
-    /**宣告顯示在主Page的View(相當於真正顯示的內容)**/
+    /**
+     * 宣告顯示在主Page的View(相當於真正顯示的內容)
+     **/
     private LayoutInflater layoutInflater;
     private View View_Scan;
     private View View_Value_30A;
@@ -103,24 +113,34 @@ public class MainActivity extends AppCompatActivity {
     private View View_Setting;
     private Boolean isPage30A;
 
-    /**宣告Checkbox**/
+    /**
+     * 宣告Checkbox
+     **/
     private CheckBox Checkbox_Option_30A;
     private CheckBox Checkbox_Option_50A;
 
-    /**宣告CheckBox OnClick後的行為**/
+    /**
+     * 宣告CheckBox OnClick後的行為
+     **/
     private CheckBoxChangeListener CheckBoxChangeListen;
 
-    /**宣告暫存layout_setting limit的變數**/
+    /**
+     * 宣告暫存layout_setting limit的變數
+     **/
     private Limit Limit_Value_30A;
     private Limit Limit_Value_50A;
 
-    /**宣告顯示setting view的LedTextView**/
+    /**
+     * 宣告顯示setting view的LedTextView
+     **/
     private LedTextView LedText_Limit_Energy_Max;
     private LedTextView LedText_Limit_Volt_Max;
     private LedTextView LedText_Limit_Volt_Min;
     private LedTextView LedText_Limit_Amp_Max;
 
-    /**宣告顯示Value view的LedTextView**/
+    /**
+     * 宣告顯示Value view的LedTextView
+     **/
     private LedTextView LedText_Value_Energy_30A;
     private LedTextView LedText_Value_Watt_30A;
     private LedTextView LedText_Value_Volt_30A;
@@ -130,13 +150,17 @@ public class MainActivity extends AppCompatActivity {
     private LedTextView LedText_Value_Volt_50A;
     private LedTextView LedText_Value_Amp_50A;
 
-    /**宣告長按加減Button相關變數**/
+    /**
+     * 宣告長按加減Button相關變數
+     **/
     private ButtonLongPressListener ButtonLongPressListen;
     int mAddSubMultiple = 1;   //加or減button的倍率(初始是1，當Timecount超過10，倍率調整)
     int mTimeCount = 0;        //長按加or減Button，連續執行加or減的次數
     View View_current;         //當按住加or減button後，透過該參數的getId()取得Button ID
 
-    /**宣告各Value的Alarm flag**/
+    /**
+     * 宣告各Value的Alarm flag
+     **/
     Boolean mFlag_AlarmEnergy_30A = false;
     Boolean mFlag_AlarmVolt_30A = false;
     Boolean mFlag_AlarmAmp_30A = false;
@@ -144,7 +168,9 @@ public class MainActivity extends AppCompatActivity {
     Boolean mFlag_AlarmVolt_50A = false;
     Boolean mFlag_AlarmAmp_50A = false;
 
-    /**Bluetooth BLE**/
+    /**
+     * Bluetooth BLE
+     **/
     private static final int RQS_ENABLE_BLUETOOTH = 1;
     private static final int REQUEST_FINE_LOCATION_PERMISSION = 102;
     private BluetoothAdapter mBluetoothAdapter;
@@ -167,22 +193,32 @@ public class MainActivity extends AppCompatActivity {
     private String mConnectDeviceName;
     private String mDeviceAddress;
 
-    private Boolean mFlag_Gps = false;
-    private Boolean mFirstOpen = true;
-    /**宣告儲存Layout_setting的Default**/
-    public class Limit
-    {
+    /**
+     * 宣告從藍牙讀取到的數據變數
+     **/
+    double mValue_Volt = 0;
+    double mValue_Amp = 0;
+    double mValue_Watt = 0;
+    double mValue_Energy = 0;
+
+    //判斷開啟APP等四秒的Logo結束沒
+    private Boolean mAppLogoEnd = false;
+
+    //判斷GPS是否開啟
+    private Boolean mGpsOpen = false;
+
+    //開啟APP自動Scan
+    private static Timer AutoScanTimer;
+
+    /**
+     * 宣告儲存Layout_setting的Default
+     **/
+    public class Limit {
         String Energy_Max = "100";
         String Volt_Max = "200";
         String Volt_Min = "0";
         String Amp_Max = "30";
     }
-
-    /** 宣告從藍牙讀取到的數據變數 **/
-    double mValue_Volt = 0;
-    double mValue_Amp = 0;
-    double mValue_Watt = 0;
-    double mValue_Energy = 0;
 
 
     @Override
@@ -196,7 +232,7 @@ public class MainActivity extends AppCompatActivity {
         /**判斷30A or 50A**/
         //Tark
 //        if () {
-            isPage30A = true;
+        isPage30A = true;
 //            Checkbox_Option_50A.setVisibility(View.INVISIBLE);
 //        } else {
 //            isPage30A = false;
@@ -280,11 +316,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓物件行為↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓**/
-    /**  建立Button按下後的行為  **/
-    class ButtonPressListener implements View.OnClickListener{
+    /**
+     * 建立Button按下後的行為
+     **/
+    class ButtonPressListener implements View.OnClickListener {
         //  按Scan Value Setting Button後，切換Page
-        public void onClick(View v){
-            switch(v.getId()){
+        public void onClick(View v) {
+            switch (v.getId()) {
                 case R.id.Button_Scan:
                     //  先清除所有View
                     Layout_Display.removeAllViews();
@@ -309,8 +347,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /** 監聽長按Button按鍵的狀態  (ButtonLongPressListener Task_ButtonLongPress LongPressHandler為一組)**/
-    public class ButtonLongPressListener implements View.OnTouchListener{
+    /**
+     * 監聽長按Button按鍵的狀態  (ButtonLongPressListener Task_ButtonLongPress LongPressHandler為一組)
+     **/
+    public class ButtonLongPressListener implements View.OnTouchListener {
         Timer timer;
 
         @Override
@@ -355,31 +395,36 @@ public class MainActivity extends AppCompatActivity {
                     }
                     break;
             }
-            //只要当down返回true时候，系统将不把本次事件记录为点击事件，也就不会触发onClick或者onLongClick事件了
+            //只要當down返回true時候，系統將不把本次事件紀錄為點擊事件，也就不會觸發onClick或者onLongClick事件了
             return true;
         }
     }
 
-    /** 透過handle 處理長按Button的行為 (ButtonLongPressListener Task_ButtonLongPress LongPressHandler為一組)**/
+    /**
+     * 透過handle 處理長按Button的行為 (ButtonLongPressListener Task_ButtonLongPress LongPressHandler為一組)
+     **/
     class Task_ButtonLongPress extends TimerTask {
         public void run() {
             LongPressHandler.sendEmptyMessage(0);
         }
     }
 
-    /** 按加or減Button時的行為   (ButtonLongPressListener Task_ButtonLongPress LongPressHandler為一組)**/
+    /**
+     * 按加or減Button時的行為   (ButtonLongPressListener Task_ButtonLongPress LongPressHandler為一組)
+     **/
     private Handler LongPressHandler = new Handler() {
         int tmp;
-        // 接收到消息后处理
+
+        // 接收到消息後處理
         public void handleMessage(Message msg) {
             //  長按button時，每執行一次加or減，Timecount加1，當Timecount到達11時，加or減的倍數變成10
-            mTimeCount ++;
+            mTimeCount++;
             if (mTimeCount == 11) {
                 mAddSubMultiple *= 10;
             }
 
             //  各種加or減按鍵執行時的行為
-            switch(View_current.getId()) {
+            switch (View_current.getId()) {
                 case R.id.Button_Energy_Max_Sub:
                     tmp = Integer.parseInt(LedText_Limit_Energy_Max.getText().toString());
                     tmp -= mAddSubMultiple;
@@ -455,11 +500,13 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    /**  建立CheckBox按下後的行為   **/
+    /**
+     * 建立CheckBox按下後的行為
+     **/
     public class CheckBoxChangeListener implements View.OnClickListener {
         public void onClick(View v) {
             //  當checkbox切換時，將textview的Value存進setting，並將另一個setting的value set進textview
-            switch (((CheckBox)v).getId()) {
+            switch (((CheckBox) v).getId()) {
                 case R.id.CheckBox_30a:
                     Checkbox_Option_30A.setChecked(true);
                     Limit_Value_50A.Energy_Max = LedText_Limit_Energy_Max.getText().toString();
@@ -488,9 +535,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**建立ListView的項目按下後的行為  **/
-    AdapterView.OnItemClickListener scanResultOnItemClickListener = new AdapterView.OnItemClickListener(){
+    /**
+     * 建立ListView的項目按下後的行為
+     **/
+    AdapterView.OnItemClickListener scanResultOnItemClickListener = new AdapterView.OnItemClickListener() {
         int device_index;
+
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             //  取得ListView點擊到的項目名稱，並藉由項目名稱去取得List的索引
@@ -555,12 +605,13 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    /**按返回鍵時，等同按HOME**/
+    /**
+     * 按返回鍵時，等同按HOME
+     **/
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
 
-        if (keyCode == KeyEvent.KEYCODE_BACK)
-        {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
             // Show home screen when pressing "back" button,
             //  so that this app won't be closed accidentally
             Intent intentHome = new Intent(Intent.ACTION_MAIN);
@@ -575,7 +626,9 @@ public class MainActivity extends AppCompatActivity {
     }
     /**↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑物件行為↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑**/
     /**↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓Function↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓**/
-    /**開啟APP後顯示Logo並等待四秒後關閉**/
+    /**
+     * 開啟APP後顯示Logo並等待四秒後關閉
+     **/
     private void InitAndShowLogo() {
         final ImageView Start_Imageview = (ImageView) findViewById(R.id.Imageview_Start);
         final ImageView Background_Imageview = (ImageView) findViewById(R.id.Imageview_Background);
@@ -583,70 +636,80 @@ public class MainActivity extends AppCompatActivity {
         Start_Imageview.bringToFront();
 
         Handler StartPicturehandler = new Handler();
-        StartPicturehandler.postDelayed(new Runnable(){
+        StartPicturehandler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 //  過四秒後將圖片刪除
                 Background_Imageview.setVisibility(View.GONE);
                 Start_Imageview.setVisibility(View.GONE);
-            }}, 4000);
+                mAppLogoEnd = true;
+
+                //圖片被刪除後，執行自動Scan
+                AutoScanTimer = new Timer(true);
+                AutoScanTimer.schedule(new Task_AutoScan(), 0, 100);
+            }
+        }, 4000);
     }
 
-    /**將宣告與物件做連結**/
+    /**
+     * 將宣告與物件做連結
+     **/
     private void LinkObject() {
         //  Display與物件進行連結
-        Layout_Display = (RelativeLayout)findViewById(R.id.display_RelativeLayout);
+        Layout_Display = (RelativeLayout) findViewById(R.id.display_RelativeLayout);
 
         //  View與物件做連結
-        layoutInflater = (LayoutInflater)this.getSystemService(LAYOUT_INFLATER_SERVICE);
+        layoutInflater = (LayoutInflater) this.getSystemService(LAYOUT_INFLATER_SERVICE);
         View_Value_30A = layoutInflater.inflate(R.layout.layout_value_30a, null);
         View_Value_50A = layoutInflater.inflate(R.layout.layout_value_50a, null);
         View_Scan = layoutInflater.inflate(R.layout.layout_scan, null);
         View_Setting = layoutInflater.inflate(R.layout.layout_setting, null);
 
         //  Button與物件做連結
-        Button_Scan = (ImageButton)findViewById(R.id.Button_Scan);
-        Button_Value = (ImageButton)findViewById(R.id.Button_Value);
-        Button_Setting = (ImageButton)findViewById(R.id.Button_Setting);
-        Button_Energy_Max_Sub = (ImageButton)View_Setting.findViewById(R.id.Button_Energy_Max_Sub);
-        Button_Energy_Max_Add = (ImageButton)View_Setting.findViewById(R.id.Button_Energy_Max_Add);
-        Button_Volt_Max_Sub = (ImageButton)View_Setting.findViewById(R.id.Button_Volt_Max_Sub);
-        Button_Volt_Max_Add = (ImageButton)View_Setting.findViewById(R.id.Button_Volt_Max_Add);
-        Button_Volt_Min_Sub = (ImageButton)View_Setting.findViewById(R.id.Button_Volt_Min_Sub);
-        Button_Volt_Min_Add = (ImageButton)View_Setting.findViewById(R.id.Button_Volt_Min_Add);
-        Button_Amp_Max_Sub = (ImageButton)View_Setting.findViewById(R.id.Button_Amp_Max_Sub);
-        Button_Amp_Max_Add = (ImageButton)View_Setting.findViewById(R.id.Button_Amp_Max_Add);
+        Button_Scan = (ImageButton) findViewById(R.id.Button_Scan);
+        Button_Value = (ImageButton) findViewById(R.id.Button_Value);
+        Button_Setting = (ImageButton) findViewById(R.id.Button_Setting);
+        Button_Energy_Max_Sub = (ImageButton) View_Setting.findViewById(R.id.Button_Energy_Max_Sub);
+        Button_Energy_Max_Add = (ImageButton) View_Setting.findViewById(R.id.Button_Energy_Max_Add);
+        Button_Volt_Max_Sub = (ImageButton) View_Setting.findViewById(R.id.Button_Volt_Max_Sub);
+        Button_Volt_Max_Add = (ImageButton) View_Setting.findViewById(R.id.Button_Volt_Max_Add);
+        Button_Volt_Min_Sub = (ImageButton) View_Setting.findViewById(R.id.Button_Volt_Min_Sub);
+        Button_Volt_Min_Add = (ImageButton) View_Setting.findViewById(R.id.Button_Volt_Min_Add);
+        Button_Amp_Max_Sub = (ImageButton) View_Setting.findViewById(R.id.Button_Amp_Max_Sub);
+        Button_Amp_Max_Add = (ImageButton) View_Setting.findViewById(R.id.Button_Amp_Max_Add);
 
         // check與物件做連結，非activity_main的物件，所以需要該layout的View
-        Checkbox_Option_30A = (CheckBox)View_Setting.findViewById(R.id.CheckBox_30a);
-        Checkbox_Option_50A = (CheckBox)View_Setting.findViewById(R.id.CheckBox_50a);
+        Checkbox_Option_30A = (CheckBox) View_Setting.findViewById(R.id.CheckBox_30a);
+        Checkbox_Option_50A = (CheckBox) View_Setting.findViewById(R.id.CheckBox_50a);
 
         //  LedTextView與物件做連結
-        LedText_Limit_Energy_Max = (LedTextView)View_Setting.findViewById(R.id.Textview_Energy_Max);
-        LedText_Limit_Volt_Max = (LedTextView)View_Setting.findViewById(R.id.Textview_Volt_Max);
-        LedText_Limit_Volt_Min = (LedTextView)View_Setting.findViewById(R.id.Textview_Volt_Min);
-        LedText_Limit_Amp_Max = (LedTextView)View_Setting.findViewById(R.id.Textview_Amp_Max);
+        LedText_Limit_Energy_Max = (LedTextView) View_Setting.findViewById(R.id.Textview_Energy_Max);
+        LedText_Limit_Volt_Max = (LedTextView) View_Setting.findViewById(R.id.Textview_Volt_Max);
+        LedText_Limit_Volt_Min = (LedTextView) View_Setting.findViewById(R.id.Textview_Volt_Min);
+        LedText_Limit_Amp_Max = (LedTextView) View_Setting.findViewById(R.id.Textview_Amp_Max);
         if (isPage30A) {
-            LedText_Value_Energy_30A = (LedTextView)View_Value_30A.findViewById(R.id.Textview_Value_Energy_30a);
-            LedText_Value_Watt_30A = (LedTextView)View_Value_30A.findViewById(R.id.Textview_Value_Watt_30a);
-            LedText_Value_Volt_30A = (LedTextView)View_Value_30A.findViewById(R.id.Textview_Value_Volt_30a);
-            LedText_Value_Amp_30A = (LedTextView)View_Value_30A.findViewById(R.id.Textview_Value_Amp_30a);
+            LedText_Value_Energy_30A = (LedTextView) View_Value_30A.findViewById(R.id.Textview_Value_Energy_30a);
+            LedText_Value_Watt_30A = (LedTextView) View_Value_30A.findViewById(R.id.Textview_Value_Watt_30a);
+            LedText_Value_Volt_30A = (LedTextView) View_Value_30A.findViewById(R.id.Textview_Value_Volt_30a);
+            LedText_Value_Amp_30A = (LedTextView) View_Value_30A.findViewById(R.id.Textview_Value_Amp_30a);
         } else {
-            LedText_Value_Energy_30A = (LedTextView)View_Value_50A.findViewById(R.id.Textview_Value_Energy_30a);
-            LedText_Value_Watt_30A = (LedTextView)View_Value_50A.findViewById(R.id.Textview_Value_Watt_30a);
-            LedText_Value_Volt_30A = (LedTextView)View_Value_50A.findViewById(R.id.Textview_Value_Volt_30a);
-            LedText_Value_Amp_30A = (LedTextView)View_Value_50A.findViewById(R.id.Textview_Value_Amp_30a);
-            LedText_Value_Energy_50A = (LedTextView)View_Value_50A.findViewById(R.id.Textview_Value_Energy_50a);
-            LedText_Value_Watt_50A = (LedTextView)View_Value_50A.findViewById(R.id.Textview_Value_Watt_50a);
-            LedText_Value_Volt_50A = (LedTextView)View_Value_50A.findViewById(R.id.Textview_Value_Volt_50a);
-            LedText_Value_Amp_50A = (LedTextView)View_Value_50A.findViewById(R.id.Textview_Value_Amp_50a);
+            LedText_Value_Energy_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Energy_30a);
+            LedText_Value_Watt_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Watt_30a);
+            LedText_Value_Volt_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Volt_30a);
+            LedText_Value_Amp_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Amp_30a);
+            LedText_Value_Energy_50A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Energy_50a);
+            LedText_Value_Watt_50A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Watt_50a);
+            LedText_Value_Volt_50A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Volt_50a);
+            LedText_Value_Amp_50A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Amp_50a);
         }
 
         //  ListView與物件做連結
-        ListView_BLE = (ListView)View_Scan.findViewById(R.id.ListView_BLE);
+        ListView_BLE = (ListView) View_Scan.findViewById(R.id.ListView_BLE);
     }
 
-    /**確認setting檔案是否存在，存在的話直接讀取值，不存在的話create檔案並給予Default**/
+    /**
+     * 確認setting檔案是否存在，存在的話直接讀取值，不存在的話create檔案並給予Default
+     **/
     private void CheckSettingFileAndCheckData() {
         String Content;
         String Filename_30A = "File_30A.txt";
@@ -742,7 +805,9 @@ public class MainActivity extends AppCompatActivity {
 //        File_50A.delete();
     }
 
-    /**將Setting 傳到textview上**/
+    /**
+     * 將Setting 傳到textview上
+     **/
     private void InitSettingView() {
         if (isPage30A) {
             LedText_Limit_Energy_Max.setText(Limit_Value_30A.Energy_Max);
@@ -757,10 +822,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /** 跳出Dialog視窗
-     *  String AlarmString: Dialog的視窗內容
-     * **/
-    private void AlarmDialog (String AlarmString) {
+    /**
+     * 跳出Dialog視窗
+     * String AlarmString: Dialog的視窗內容
+     **/
+    private void AlarmDialog(String AlarmString) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
         builder.setTitle("Warning")
@@ -773,7 +839,9 @@ public class MainActivity extends AppCompatActivity {
         about_dialog.show();
     }
 
-    /**更新limit value且輸出至檔案**/
+    /**
+     * 更新limit value且輸出至檔案
+     **/
     private void SaveSetting() {
         if (Checkbox_Option_30A.isChecked()) {
             try {
@@ -813,7 +881,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**Bluetooth BLE**/
-    /**Get Service**/
+    /**
+     * Get Service
+     **/
     private final ServiceConnection ServiceConnection = new ServiceConnection() {
 
         @Override
@@ -836,8 +906,11 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    /**1.藍牙若沒開，詢問是否開啟
-     * 2.GPS沒開，詢問是否跳到設定頁面**/
+    /**
+     * 1.藍牙若沒開，詢問是否開啟
+     * 2.詢問是否可以存取位置權限
+     * 3.GPS沒開，詢問是否跳到設定頁面
+     **/
     @Override
     protected void onResume() {
 
@@ -845,64 +918,86 @@ public class MainActivity extends AppCompatActivity {
         if (!mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, RQS_ENABLE_BLUETOOTH);
-        }
+        } else {
 
-        if (Build.VERSION.SDK_INT >= 23) {
-            int location_permission = checkSelfPermission(
-                    Manifest.permission.ACCESS_COARSE_LOCATION);
-            //  要求存取GPS權限
-            if (location_permission != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{
-                                Manifest.permission.ACCESS_COARSE_LOCATION},
-                        REQUEST_FINE_LOCATION_PERMISSION);
-            }
-            /**若GPS未開，則詢問是否跳轉到設定頁面**/
-            LocationManager locationManager = (LocationManager) this.getSystemService(
-                    Context.LOCATION_SERVICE);
-            if (!locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)) {
-                if (!mFlag_Gps) {
-                    if (mFirstOpen) {
-                        mFlag_Gps = true;
+            if (Build.VERSION.SDK_INT >= 23) {
+                int location_permission = checkSelfPermission(
+                        Manifest.permission.ACCESS_COARSE_LOCATION);
+
+                /**要求存取GPS權限，請求結束後會再跑一次Resume**/
+                if (location_permission != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{
+                                    Manifest.permission.ACCESS_COARSE_LOCATION},
+                            REQUEST_FINE_LOCATION_PERMISSION);
+                } else {
+                    LocationManager locationManager = (LocationManager) this.getSystemService(
+                            Context.LOCATION_SERVICE);
+
+                    /**若GPS未開，則詢問是否跳轉到設定頁面**/
+                    mGpsOpen = locationManager.isProviderEnabled(
+                            android.location.LocationManager.GPS_PROVIDER);
+
+                    if (!mGpsOpen) {
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("GPS")
+                                .setMessage("Gps is disable, change to setting page to enable it?\n" +
+                                        "if you already enabled, confirm that it is not network mode.")
+                                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        Toast.makeText(MainActivity.this, "Gps is disable", Toast.LENGTH_SHORT).show();
+                                        finish();
+                                    }
+                                })
+                                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        //  跳到(GPS)定位系統的設定頁面
+                                        Intent enableGpsintent = new Intent(
+                                                Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                                        startActivityForResult(enableGpsintent, 0);
+                                    }
+                                })
+                                .show();
                     }
-                    new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("GPS")
-                            .setMessage("Gps is disable, change to setting page to enable it?\n" +
-                                    "if you already enabled, confirm that it is not network mode.")
-                            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    Toast.makeText(MainActivity.this, "Gps is disable", Toast.LENGTH_SHORT).show();
-                                    finish();
-                                }
-                            })
-                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    //  跳到(GPS)定位系統的設定頁面
-                                    Intent enableGpsintent = new Intent(
-                                            Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                                    startActivityForResult(enableGpsintent, 0);
-                                }
-                            })
-                            .show();
                 }
+            }
+        }
+        super.onResume();
+    }
 
-            }
-            if (mBluetoothAdapter.isEnabled() &&
-                    locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) &&
-                    !mConnected) {
-                /**添加layout_Value的View進Display**/
-                Layout_Display.removeAllViews();
-                Layout_Display.addView(View_Scan);
-                scanLeDevice(mBluetoothAdapter.isEnabled());
-                mFlag_Gps = false;
-                mFirstOpen = false;
-            }
-            super.onResume();
+    /**
+     * 透過handle 處理自動Scan的行為
+     **/
+    class Task_AutoScan extends TimerTask {
+        public void run() {
+            AutoScanHandle.sendEmptyMessage(0);
         }
     }
 
-    /**對應startActivityForResult**/
+    /**
+     * 當Bluetooth、GPS、未連線且LOGO結束，自動進行Scan
+     **/
+    private Handler AutoScanHandle = new Handler() {
+        Boolean Bluetooth;
+
+        public void handleMessage(Message msg) {
+            Bluetooth = mBluetoothAdapter.isEnabled();
+            if (Bluetooth && mGpsOpen && !mConnected && mAppLogoEnd) {
+                AutoScanTimer.cancel();
+                AutoScanTimer = null;
+                /**添加layout_Value的View進Display**/
+                Layout_Display.removeAllViews();
+                Layout_Display.addView(View_Scan);
+                scanLeDevice(Bluetooth);
+            }
+            super.handleMessage(msg);
+        }
+    };
+
+    /**
+     * 對應startActivityForResult
+     **/
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         //  startActivityForResult未開啟藍牙，則結束APP
@@ -922,10 +1017,12 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    /**當存取權限允許或被拒**/
+    /**
+     * 當存取權限允許或被拒
+     **/
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        switch(requestCode) {
+        switch (requestCode) {
             case REQUEST_FINE_LOCATION_PERMISSION:
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -938,7 +1035,9 @@ public class MainActivity extends AppCompatActivity {
         return;
     }
 
-    /**取得Bluetooth Adapter和Bluetooth Scanner**/
+    /**
+     * 取得Bluetooth Adapter和Bluetooth Scanner
+     **/
     private void getBluetoothAdapterAndLeScanner() {
         // Get BluetoothAdapter and BluetoothLeScanner.
         final BluetoothManager bluetoothManager =
@@ -953,7 +1052,9 @@ public class MainActivity extends AppCompatActivity {
         mScanning = false;
     }
 
-    /**進行scan device**/
+    /**
+     * 進行scan device
+     **/
     private void scanLeDevice(final boolean enable) {
         if (enable) {//  當Adapter是開啟的
             if (!mScanning) {//  當目前沒有在Scan
@@ -970,14 +1071,14 @@ public class MainActivity extends AppCompatActivity {
                     public void run() {
                         mBluetoothLeScanner.stopScan(ScanCallback);
                         if (mScanning) {
-//                            Toast.makeText(MainActivity.this,
-//                                    "Scan timeout",
-//                                    Toast.LENGTH_LONG).show();
+                            Toast.makeText(MainActivity.this,
+                                    "Scan Off",
+                                    Toast.LENGTH_LONG).show();
                             mScanning = false;
                         }
                     }
                 }, SCAN_PERIOD);
-//                Toast.makeText(MainActivity.this, "Scanning", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "Scanning", Toast.LENGTH_LONG).show();
                 mBluetoothLeScanner.startScan(ScanCallback);
                 mScanning = true;
             }
@@ -987,7 +1088,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**設定Scan CallBack**/
+    /**
+     * 設定Scan CallBack
+     **/
     private ScanCallback ScanCallback = new ScanCallback() {
         //  Return Scan到的設備
         @Override
@@ -1000,7 +1103,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onBatchScanResults(List<ScanResult> results) {
             super.onBatchScanResults(results);
-            for(ScanResult result : results){
+            for (ScanResult result : results) {
                 addBluetoothDevice(result.getDevice());
             }
         }
@@ -1014,8 +1117,8 @@ public class MainActivity extends AppCompatActivity {
                     Toast.LENGTH_LONG).show();
         }
 
-        private void addBluetoothDevice(BluetoothDevice device){
-            if(device.getName() != null) {
+        private void addBluetoothDevice(BluetoothDevice device) {
+            if (device.getName() != null) {
                 //  判斷Device存不存在BluetoothList
                 if (!mListBluetoothDevice.contains(device)) {
                     //  將Device存進BluetoothList
@@ -1029,7 +1132,9 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    /**註冊GattServer會發生CallBack的事件**/
+    /**
+     * 註冊GattServer會發生CallBack的事件
+     **/
     private static IntentFilter makeGattUpdateIntentFilter() {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
@@ -1039,9 +1144,12 @@ public class MainActivity extends AppCompatActivity {
         return intentFilter;
     }
 
-    /**接收GattServer傳來的訊息**/
+    /**
+     * 接收GattServer傳來的訊息
+     **/
     private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
         String action;
+
         @Override
         public void onReceive(Context context, Intent intent) {
             action = intent.getAction();
@@ -1068,7 +1176,9 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    /**解析從藍牙讀取的資料**/
+    /**
+     * 解析從藍牙讀取的資料
+     **/
     private void Decode_data(byte[] data) {
         mValue_Volt = Byte42double(data, 3) / 10000;
         mValue_Amp = Byte42double(data, 7) / 10000;
@@ -1077,19 +1187,23 @@ public class MainActivity extends AppCompatActivity {
 //        Log.d("print data", "Volt:" + String.valueOf(mValue_Volt) + " Amp:" + String.valueOf(mValue_Amp) + " Watt:" + String.valueOf(mValue_Watt) + "Energy" + String.valueOf(mValue_Energy));
     }
 
-    /**將Byte[4]轉成Double**/
+    /**
+     * 將Byte[4]轉成Double
+     **/
     private double Byte42double(byte[] data, int sAddr) {
         double[] mIndex;
         mIndex = new double[4];
 
-        for(int i = 0; i < 4; i++) {
+        for (int i = 0; i < 4; i++) {
             mIndex[i] = data[sAddr + i] & 0x00000000000000FF;
 //            Log.d("test", String.valueOf(i) +":" +String.valueOf(mIndex[i]));
         }
-        return((mIndex[0] * 16777216) + (mIndex[1] * 65536) + (mIndex[2] * 256) + mIndex[3]);
+        return ((mIndex[0] * 16777216) + (mIndex[1] * 65536) + (mIndex[2] * 256) + mIndex[3]);
     }
 
-    /**進行Refresh的行為**/
+    /**
+     * 進行Refresh的行為
+     **/
     private void Refresh(byte[] Data) {
         //顯示幾位
         DecimalFormat DecimalFormat = new DecimalFormat("#.##");
