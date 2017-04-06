@@ -51,8 +51,8 @@
 
         <ImageButton
             android:id="@+id/Button_Scan"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
             android:background="@null"
             android:scaleType="fitCenter"
             app:srcCompat="@drawable/icon_scan" />
@@ -65,8 +65,8 @@
 
         <ImageButton
             android:id="@+id/Button_Value"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
+            android:layout_width="96dp"
+            android:layout_height="96dp"
             android:background="@null"
             android:scaleType="fitCenter"
             app:srcCompat="@drawable/icon_value" />
@@ -79,8 +79,8 @@
 
         <ImageButton
             android:id="@+id/Button_Setting"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
             android:background="@null"
             android:scaleType="fitCenter"
             app:srcCompat="@drawable/icon_setting" />

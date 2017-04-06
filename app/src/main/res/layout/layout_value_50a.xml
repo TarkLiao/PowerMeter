@@ -67,7 +67,7 @@
                 android:ellipsize="end"
                 android:gravity="right"
                 android:background="@drawable/orange_shape"
-                android:text="888.88"
+                android:text="000"
                 android:paddingRight="10dp"
                 android:textColor="@color/Color_White"
                 android:textSize="40sp" />
@@ -139,7 +139,7 @@
                 android:ellipsize="end"
                 android:gravity="right"
                 android:background="@drawable/orange_shape"
-                android:text="888.88"
+                android:text="000"
                 android:paddingRight="10dp"
                 android:textColor="@color/Color_White"
                 android:textSize="40sp" />
@@ -211,7 +211,7 @@
                 android:ellipsize="end"
                 android:gravity="right"
                 android:background="@drawable/orange_shape"
-                android:text="888.88"
+                android:text="000"
                 android:paddingRight="10dp"
                 android:textColor="@color/Color_White"
                 android:textSize="40sp" />
@@ -284,7 +284,7 @@
                 android:ellipsize="end"
                 android:gravity="right"
                 android:background="@drawable/orange_shape"
-                android:text="888.88"
+                android:text="00.0"
                 android:paddingRight="10dp"
                 android:textColor="@color/Color_White"
                 android:textSize="40sp" />
@@ -321,151 +321,6 @@
             android:layout_width="match_parent"
             android:layout_height="5dp"
             android:background="#DDDDDD" />
-
-        <TextView
-            android:id="@+id/padding38"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
-        <LinearLayout
-            android:id="@+id/linearLayout5_50a"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
-            android:gravity="center">
-
-            <TextView
-                android:id="@+id/padding17"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="4" />
-
-            <TextView
-                android:id="@+id/tv_energy_50a"
-                android:layout_width="90dp"
-                android:layout_height="wrap_content"
-                android:background="@drawable/shape"
-                android:gravity="center"
-                android:paddingTop="1dp"
-                android:paddingBottom="1dp"
-                android:text="@string/Title_Energy"
-                android:textColor="@color/Color_White"
-                android:textSize="25sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/padding18"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
-            <com.radinet.ble_app.LedTextView
-                android:id="@+id/Textview_Value_Energy_50a"
-                android:layout_width="130dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:ellipsize="end"
-                android:gravity="right"
-                android:background="@drawable/orange_shape"
-                android:text="888.88"
-                android:paddingRight="10dp"
-                android:textColor="@color/Color_White"
-                android:textSize="40sp" />
-
-            <TextView
-                android:id="@+id/padding19"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
-            <TextView
-                android:id="@+id/tv_energy_unit_50a"
-                android:layout_width="50dp"
-                android:layout_height="wrap_content"
-                android:text="@string/Unit_Energy"
-                android:textColor="@color/Color_Orange"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/padding20"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="4" />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/padding39"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="0.5" />
-
-        <LinearLayout
-            android:id="@+id/linearLayout6_50a"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center">
-
-            <TextView
-                android:id="@+id/padding21"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="4" />
-
-            <TextView
-                android:id="@+id/tv_watt_50a"
-                android:layout_width="90dp"
-                android:layout_height="wrap_content"
-                android:background="@drawable/shape"
-                android:gravity="center"
-                android:paddingTop="1dp"
-                android:paddingBottom="1dp"
-                android:text="@string/Title_Watt"
-                android:textColor="@color/Color_White"
-                android:textSize="25sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/padding22"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
-            <com.radinet.ble_app.LedTextView
-                android:id="@+id/Textview_Value_Watt_50a"
-                android:layout_width="130dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:ellipsize="end"
-                android:gravity="right"
-                android:background="@drawable/orange_shape"
-                android:text="888.88"
-                android:paddingRight="10dp"
-                android:textColor="@color/Color_White"
-                android:textSize="40sp" />
-
-            <TextView
-                android:id="@+id/padding23"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
-            <TextView
-                android:id="@+id/tv_watt_unit_50a"
-                android:layout_width="50dp"
-                android:layout_height="wrap_content"
-                android:text="@string/Unit_Watt"
-                android:textColor="@color/Color_Orange"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/padding24"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="4" />
-        </LinearLayout>
 
         <TextView
             android:id="@+id/padding40"
@@ -513,7 +368,7 @@
                 android:ellipsize="end"
                 android:gravity="right"
                 android:background="@drawable/orange_shape"
-                android:text="888.88"
+                android:text="000"
                 android:paddingRight="10dp"
                 android:textColor="@color/Color_White"
                 android:textSize="40sp" />
@@ -586,7 +441,7 @@
                 android:ellipsize="end"
                 android:gravity="right"
                 android:background="@drawable/orange_shape"
-                android:text="888.88"
+                android:text="00.0"
                 android:paddingRight="10dp"
                 android:textColor="@color/Color_White"
                 android:textSize="40sp" />

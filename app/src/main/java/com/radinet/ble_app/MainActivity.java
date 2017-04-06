@@ -61,6 +61,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -145,8 +146,6 @@ public class MainActivity extends AppCompatActivity {
     private LedTextView LedText_Value_Watt_30A;
     private LedTextView LedText_Value_Volt_30A;
     private LedTextView LedText_Value_Amp_30A;
-    private LedTextView LedText_Value_Energy_50A;
-    private LedTextView LedText_Value_Watt_50A;
     private LedTextView LedText_Value_Volt_50A;
     private LedTextView LedText_Value_Amp_50A;
 
@@ -196,10 +195,13 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 宣告從藍牙讀取到的數據變數
      **/
-    double mValue_Volt = 0;
-    double mValue_Amp = 0;
+    double mValue_Volt_30A = 0;
+    double mValue_Amp_30A = 0;
     double mValue_Watt = 0;
     double mValue_Energy = 0;
+
+    double mValue_Volt_50A = 0;
+    double mValue_Amp_50A = 0;
 
     //判斷開啟APP等四秒的Logo結束沒
     private Boolean mAppLogoEnd = false;
@@ -229,17 +231,14 @@ public class MainActivity extends AppCompatActivity {
         /**開啟APP後顯示Logo並等待四秒後關閉**/
         InitAndShowLogo();
 
-        /**判斷30A or 50A**/
-        //Tark
-//        if () {
+        /**設定顯示30介面**/
         isPage30A = true;
-//            Checkbox_Option_50A.setVisibility(View.INVISIBLE);
-//        } else {
-//            isPage30A = false;
-//        }
 
-        /**將宣告與物件做連結**/
-        LinkObject();
+        /**將宣告與Common物件做連結**/
+        LinkObjectCommon();
+
+        /**將Value的textview與物件做連結**/
+        LinkObjectValue();
 
         /**確認setting檔案是否存在，存在的話直接讀取值，不存在的話create檔案並給予Default**/
         CheckSettingFileAndCheckData();
@@ -508,6 +507,7 @@ public class MainActivity extends AppCompatActivity {
             //  當checkbox切換時，將textview的Value存進setting，並將另一個setting的value set進textview
             switch (((CheckBox) v).getId()) {
                 case R.id.CheckBox_30a:
+                    isPage30A = true;
                     Checkbox_Option_30A.setChecked(true);
                     Limit_Value_50A.Energy_Max = LedText_Limit_Energy_Max.getText().toString();
                     Limit_Value_50A.Volt_Max = LedText_Limit_Volt_Max.getText().toString();
@@ -520,6 +520,7 @@ public class MainActivity extends AppCompatActivity {
                     LedText_Limit_Amp_Max.setText(Limit_Value_30A.Amp_Max);
                     break;
                 case R.id.CheckBox_50a:
+                    isPage30A = false;
                     Checkbox_Option_30A.setChecked(false);
                     Limit_Value_30A.Energy_Max = LedText_Limit_Energy_Max.getText().toString();
                     Limit_Value_30A.Volt_Max = LedText_Limit_Volt_Max.getText().toString();
@@ -532,6 +533,7 @@ public class MainActivity extends AppCompatActivity {
                     LedText_Limit_Amp_Max.setText(Limit_Value_50A.Amp_Max);
                     break;
             }
+            LinkObjectValue();
         }
     }
 
@@ -654,7 +656,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 將宣告與物件做連結
      **/
-    private void LinkObject() {
+    private void LinkObjectCommon() {
         //  Display與物件進行連結
         Layout_Display = (RelativeLayout) findViewById(R.id.display_RelativeLayout);
 
@@ -687,6 +689,14 @@ public class MainActivity extends AppCompatActivity {
         LedText_Limit_Volt_Max = (LedTextView) View_Setting.findViewById(R.id.Textview_Volt_Max);
         LedText_Limit_Volt_Min = (LedTextView) View_Setting.findViewById(R.id.Textview_Volt_Min);
         LedText_Limit_Amp_Max = (LedTextView) View_Setting.findViewById(R.id.Textview_Amp_Max);
+
+        //  ListView與物件做連結
+        ListView_BLE = (ListView) View_Scan.findViewById(R.id.ListView_BLE);
+    }
+    /**
+     * 將宣告與物件做連結
+     **/
+    private void LinkObjectValue() {
         if (isPage30A) {
             LedText_Value_Energy_30A = (LedTextView) View_Value_30A.findViewById(R.id.Textview_Value_Energy_30a);
             LedText_Value_Watt_30A = (LedTextView) View_Value_30A.findViewById(R.id.Textview_Value_Watt_30a);
@@ -697,16 +707,10 @@ public class MainActivity extends AppCompatActivity {
             LedText_Value_Watt_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Watt_30a);
             LedText_Value_Volt_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Volt_30a);
             LedText_Value_Amp_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Amp_30a);
-            LedText_Value_Energy_50A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Energy_50a);
-            LedText_Value_Watt_50A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Watt_50a);
             LedText_Value_Volt_50A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Volt_50a);
             LedText_Value_Amp_50A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Amp_50a);
         }
-
-        //  ListView與物件做連結
-        ListView_BLE = (ListView) View_Scan.findViewById(R.id.ListView_BLE);
     }
-
     /**
      * 確認setting檔案是否存在，存在的話直接讀取值，不存在的話create檔案並給予Default
      **/
@@ -1189,11 +1193,31 @@ public class MainActivity extends AppCompatActivity {
      * 解析從藍牙讀取的資料
      **/
     private void Decode_data(byte[] data) {
-        mValue_Volt = Byte42double(data, 3) / 10000;
-        mValue_Amp = Byte42double(data, 7) / 10000;
-        mValue_Watt = Byte42double(data, 11) / 10000;
-        mValue_Energy = Byte42double(data, 15) / 10000;
-//        Log.d("print data", "Volt:" + String.valueOf(mValue_Volt) + " Amp:" + String.valueOf(mValue_Amp) + " Watt:" + String.valueOf(mValue_Watt) + "Energy" + String.valueOf(mValue_Energy));
+        double Value_Watt_30A;
+        double Value_Watt_50A;
+        double Value_Energy_30A;
+        double Value_Energy_50A;
+
+        mValue_Volt_30A = new BigDecimal(Byte42double(data, 3) / 10000)
+                .setScale(0, BigDecimal.ROUND_HALF_UP)
+                .doubleValue();
+        mValue_Amp_30A = new BigDecimal(Byte42double(data, 7) / 10000)
+                .setScale(0, BigDecimal.ROUND_HALF_UP)
+                .doubleValue();
+        Value_Watt_30A = Byte42double(data, 11) / 10000;
+        Value_Energy_30A = Byte42double(data, 15) / 10000;
+
+        Value_Watt_50A = 0;
+        Value_Energy_50A = 0;
+
+        mValue_Watt = new BigDecimal(Value_Watt_30A + Value_Watt_50A)
+                .setScale(0, BigDecimal.ROUND_HALF_UP)
+                .doubleValue();
+
+        mValue_Energy = new BigDecimal(Value_Energy_30A + Value_Energy_50A)
+                .setScale(0, BigDecimal.ROUND_HALF_UP)
+                .doubleValue();
+//        Log.d("print data", "Volt:" + String.valueOf(mValue_Volt_30A) + " Amp:" + String.valueOf(mValue_Amp_30A) + " Watt:" + String.valueOf(mValue_Watt_30A) + "Energy" + String.valueOf(mValue_Energy_30A));
     }
 
     /**
@@ -1215,9 +1239,13 @@ public class MainActivity extends AppCompatActivity {
      **/
     private void Refresh(byte[] Data) {
         //顯示幾位
-        DecimalFormat DecimalFormat = new DecimalFormat("#.##");
+        DecimalFormat DecimalFormat_Common = new DecimalFormat("#");
+        DecimalFormat DecimalFormat_Amp = new DecimalFormat("#.#");
+
         //位數不足補零
-        DecimalFormat.applyPattern("0.00");
+        DecimalFormat_Common.applyPattern("0");
+        DecimalFormat_Amp.applyPattern("0.0");
+
         if (Data != null && Data[0] == 0x01 && Data[1] == 0x03 && Data[2] == 0x20) {
             Log.d("test", "NeedData");
             Decode_data(Data);
@@ -1237,24 +1265,31 @@ public class MainActivity extends AppCompatActivity {
         Vibrator vb = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
         //  當30A的Energy超出setting範圍，改變字體顏色跳出Dialog視窗及震動
-        if (mValue_Energy > Integer.parseInt(Limit_Value_30A.Energy_Max)) {
+        if (isPage30A && mValue_Energy > Integer.parseInt(Limit_Value_30A.Energy_Max)) {
             if (!mFlag_AlarmEnergy_30A) {
                 mFlag_AlarmEnergy_30A = true;
                 AlarmDialog("Over Energy scope for 30A!");
                 vb.vibrate(2000); //震動
             }
             LedText_Value_Energy_30A.setTextColor(Color.rgb(255, 0, 0));
+        } else if (!isPage30A && mValue_Energy > Integer.parseInt(Limit_Value_50A.Energy_Max)){
+            if (!mFlag_AlarmEnergy_50A) {
+                mFlag_AlarmEnergy_50A = true;
+                AlarmDialog("Over Energy scope for 50A!");
+                vb.vibrate(2000); //震動
+            }
         } else {
             mFlag_AlarmEnergy_30A = false;
+            mFlag_AlarmEnergy_50A = false;
             LedText_Value_Energy_30A.setTextColor(Color.rgb(255, 255, 255));
         }
-        LedText_Value_Energy_30A.setText(DecimalFormat.format(mValue_Energy));
+        LedText_Value_Energy_30A.setText(DecimalFormat_Common.format(mValue_Energy));
 
-        LedText_Value_Watt_30A.setText(DecimalFormat.format(mValue_Watt));
+        LedText_Value_Watt_30A.setText(DecimalFormat_Common.format(mValue_Watt));
 
         //  當30A的Volt超出setting範圍，改變字體顏色、跳出Dialog視窗及震動
-        if (mValue_Volt > Integer.parseInt(Limit_Value_30A.Volt_Max) ||
-                mValue_Volt < Integer.parseInt(Limit_Value_30A.Volt_Min)) {
+        if (mValue_Volt_30A > Integer.parseInt(Limit_Value_30A.Volt_Max) ||
+                mValue_Volt_30A < Integer.parseInt(Limit_Value_30A.Volt_Min)) {
             if (!mFlag_AlarmVolt_30A) {
                 mFlag_AlarmVolt_30A = true;
                 AlarmDialog("Over Volt scope for 30A!");
@@ -1265,10 +1300,10 @@ public class MainActivity extends AppCompatActivity {
             mFlag_AlarmVolt_30A = false;
             LedText_Value_Volt_30A.setTextColor(Color.rgb(255, 255, 255));
         }
-        LedText_Value_Volt_30A.setText(DecimalFormat.format(mValue_Volt));
+        LedText_Value_Volt_30A.setText(DecimalFormat_Common.format(mValue_Volt_30A));
 
         //  當30A的Amp超出setting範圍，改變字體顏色、跳出Dialog視窗及震動
-        if (mValue_Amp > Integer.parseInt(Limit_Value_30A.Amp_Max)) {
+        if (mValue_Amp_30A > Integer.parseInt(Limit_Value_30A.Amp_Max)) {
             if (!mFlag_AlarmAmp_30A) {
                 mFlag_AlarmAmp_30A = true;
                 AlarmDialog("Over Amp scope for 30A!");
@@ -1279,28 +1314,12 @@ public class MainActivity extends AppCompatActivity {
             mFlag_AlarmAmp_30A = false;
             LedText_Value_Amp_30A.setTextColor(Color.rgb(255, 255, 255));
         }
-        LedText_Value_Amp_30A.setText(DecimalFormat.format(mValue_Amp));
+        LedText_Value_Amp_30A.setText(DecimalFormat_Amp.format(mValue_Amp_30A));
 
         if (!isPage30A) {
-            //  當50A的Energy超出setting範圍，改變字體顏色、跳出Dialog視窗及震動
-            if (mValue_Energy > Integer.parseInt(Limit_Value_50A.Energy_Max)) {
-                if (!mFlag_AlarmEnergy_50A) {
-                    mFlag_AlarmEnergy_50A = true;
-                    AlarmDialog("Over Energy scope for 50A!");
-                    vb.vibrate(2000); //震動
-                }
-                LedText_Value_Energy_50A.setTextColor(Color.rgb(255, 0, 0));
-            } else {
-                mFlag_AlarmEnergy_50A = false;
-                LedText_Value_Energy_50A.setTextColor(Color.rgb(255, 255, 255));
-            }
-            LedText_Value_Energy_50A.setText(DecimalFormat.format(mValue_Energy));
-
-            LedText_Value_Watt_50A.setText(DecimalFormat.format(mValue_Watt));
-
             //  當50A的Volt超出setting範圍，改變字體顏色、跳出Dialog視窗及震動
-            if (mValue_Volt > Integer.parseInt(Limit_Value_50A.Volt_Max) ||
-                    mValue_Volt < Integer.parseInt(Limit_Value_50A.Volt_Min)) {
+            if (mValue_Volt_50A > Integer.parseInt(Limit_Value_50A.Volt_Max) ||
+                    mValue_Volt_50A < Integer.parseInt(Limit_Value_50A.Volt_Min)) {
                 if (!mFlag_AlarmVolt_50A) {
                     mFlag_AlarmVolt_50A = true;
                     AlarmDialog("Over Volt scope for 50A!");
@@ -1311,10 +1330,10 @@ public class MainActivity extends AppCompatActivity {
                 mFlag_AlarmVolt_50A = false;
                 LedText_Value_Volt_50A.setTextColor(Color.rgb(255, 255, 255));
             }
-            LedText_Value_Volt_50A.setText(DecimalFormat.format(mValue_Volt));
+            LedText_Value_Volt_50A.setText(DecimalFormat_Common.format(mValue_Volt_50A));
 
             //  當50A的Amp超出setting範圍，改變字體顏色、跳出Dialog視窗及震動
-            if (mValue_Amp > Integer.parseInt(Limit_Value_50A.Amp_Max)) {
+            if (mValue_Amp_50A > Integer.parseInt(Limit_Value_50A.Amp_Max)) {
                 if (!mFlag_AlarmAmp_50A) {
                     mFlag_AlarmAmp_50A = true;
                     AlarmDialog("Over Amp scope for 50A!");
@@ -1325,7 +1344,7 @@ public class MainActivity extends AppCompatActivity {
                 mFlag_AlarmAmp_50A = false;
                 LedText_Value_Amp_50A.setTextColor(Color.rgb(255, 255, 255));
             }
-            LedText_Value_Amp_50A.setText(DecimalFormat.format(mValue_Amp));
+            LedText_Value_Amp_50A.setText(DecimalFormat_Amp.format(mValue_Amp_50A));
         }
     }
     /**↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑Function↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑**/

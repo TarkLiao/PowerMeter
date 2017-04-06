@@ -63,7 +63,7 @@
                 android:ellipsize="end"
                 android:gravity="right"
                 android:background="@drawable/orange_shape"
-                android:text="888.88"
+                android:text="000"
                 android:paddingRight="10dp"
                 android:textColor="@color/Color_White"
                 android:textSize="40sp" />
@@ -132,7 +132,7 @@
                 android:ellipsize="end"
                 android:gravity="right"
                 android:background="@drawable/orange_shape"
-                android:text="888.88"
+                android:text="000"
                 android:paddingRight="10dp"
                 android:textColor="@color/Color_White"
                 android:textSize="40sp" />
@@ -205,7 +205,7 @@
                 android:ellipsize="end"
                 android:gravity="right"
                 android:background="@drawable/orange_shape"
-                android:text="888.88"
+                android:text="000"
                 android:paddingRight="10dp"
                 android:textColor="@color/Color_White"
                 android:textSize="40sp" />
@@ -276,7 +276,7 @@
                 android:ellipsize="end"
                 android:gravity="right"
                 android:background="@drawable/orange_shape"
-                android:text="888.88"
+                android:text="00.0"
                 android:paddingRight="10dp"
                 android:textColor="@color/Color_White"
                 android:textSize="40sp" />
