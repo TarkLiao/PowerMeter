@@ -61,10 +61,9 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:ellipsize="end"
-                android:gravity="right"
+                android:gravity="center"
                 android:background="@drawable/orange_shape"
                 android:text="000"
-                android:paddingRight="10dp"
                 android:textColor="@color/Color_White"
                 android:textSize="40sp" />
             <TextView
@@ -76,6 +75,7 @@
                 android:id="@+id/tv_energy_unit_30a"
                 android:layout_width="50dp"
                 android:layout_height="wrap_content"
+                android:gravity="center"
                 android:text="@string/Unit_Energy"
                 android:textColor="@color/Color_Orange"
                 android:textSize="20sp"
@@ -130,10 +130,9 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:ellipsize="end"
-                android:gravity="right"
+                android:gravity="center"
                 android:background="@drawable/orange_shape"
                 android:text="000"
-                android:paddingRight="10dp"
                 android:textColor="@color/Color_White"
                 android:textSize="40sp" />
 
@@ -147,6 +146,7 @@
                 android:id="@+id/tv_watt_unit_30a"
                 android:layout_width="50dp"
                 android:layout_height="wrap_content"
+                android:gravity="center"
                 android:text="@string/Unit_Watt"
                 android:textColor="@color/Color_Orange"
                 android:textSize="20sp"
@@ -203,10 +203,9 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:ellipsize="end"
-                android:gravity="right"
+                android:gravity="center"
                 android:background="@drawable/orange_shape"
                 android:text="000"
-                android:paddingRight="10dp"
                 android:textColor="@color/Color_White"
                 android:textSize="40sp" />
 
@@ -220,6 +219,7 @@
                 android:id="@+id/tv_volt_unit_30a"
                 android:layout_width="50dp"
                 android:layout_height="wrap_content"
+                android:gravity="center"
                 android:text="@string/Unit_Volt"
                 android:textColor="@color/Color_Orange"
                 android:textSize="20sp"
@@ -274,10 +274,9 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:ellipsize="end"
-                android:gravity="right"
+                android:gravity="center"
                 android:background="@drawable/orange_shape"
                 android:text="00.0"
-                android:paddingRight="10dp"
                 android:textColor="@color/Color_White"
                 android:textSize="40sp" />
 
@@ -291,6 +290,7 @@
                 android:id="@+id/tv_amp_unit_30a"
                 android:layout_width="50dp"
                 android:layout_height="wrap_content"
+                android:gravity="center"
                 android:text="@string/Unit_Amp"
                 android:textColor="@color/Color_Orange"
                 android:textSize="20sp"

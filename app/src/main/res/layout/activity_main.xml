@@ -13,13 +13,33 @@
         android:layout_centerInParent="true"
         app:srcCompat="@drawable/picture_background"
         android:scaleType="fitXY"/>
-    <ImageView
-        android:id="@+id/Imageview_Start"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
+    <LinearLayout
+        android:id="@+id/Layout_Logo"
+        android:layout_width="200dp"
+        android:layout_height="300dp"
+        android:orientation="vertical"
         android:layout_centerInParent="true"
-        app:srcCompat="@drawable/picture_start"/>
+        android:gravity="center">
+
+        <ImageView
+            android:id="@+id/Imageview_Start"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_centerInParent="true"
+            android:scaleType="fitXY"
+            app:srcCompat="@drawable/icon_value"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="POWER WATCHDOG"
+            android:gravity="center"
+            android:textColor="@color/Color_Black"
+            android:textSize="25sp"
+            android:textStyle="bold"
+            android:layout_below="@+id/view" />
+
+    </LinearLayout>
+
 
 
     <RelativeLayout

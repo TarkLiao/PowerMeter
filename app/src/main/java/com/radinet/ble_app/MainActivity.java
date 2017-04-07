@@ -32,6 +32,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Layout;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -632,10 +633,10 @@ public class MainActivity extends AppCompatActivity {
      * 開啟APP後顯示Logo並等待四秒後關閉
      **/
     private void InitAndShowLogo() {
-        final ImageView Start_Imageview = (ImageView) findViewById(R.id.Imageview_Start);
         final ImageView Background_Imageview = (ImageView) findViewById(R.id.Imageview_Background);
+        final LinearLayout Layout_Logo = (LinearLayout) findViewById(R.id.Layout_Logo);
         Background_Imageview.bringToFront();
-        Start_Imageview.bringToFront();
+        Layout_Logo.bringToFront();
 
         Handler StartPicturehandler = new Handler();
         StartPicturehandler.postDelayed(new Runnable() {
@@ -643,7 +644,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 //  過四秒後將圖片刪除
                 Background_Imageview.setVisibility(View.GONE);
-                Start_Imageview.setVisibility(View.GONE);
+                Layout_Logo.setVisibility(View.GONE);
                 mAppLogoEnd = true;
 
                 //圖片被刪除後，執行自動Scan
@@ -987,13 +988,24 @@ public class MainActivity extends AppCompatActivity {
 
         public void handleMessage(Message msg) {
             Bluetooth = mBluetoothAdapter.isEnabled();
-            if (Bluetooth && mGpsOpen && !mConnected && mAppLogoEnd) {
-                AutoScanTimer.cancel();
-                AutoScanTimer = null;
-                /**添加layout_Value的View進Display**/
-                Layout_Display.removeAllViews();
-                Layout_Display.addView(View_Scan);
-                scanLeDevice(Bluetooth);
+            if (Build.VERSION.SDK_INT >= 23) {
+                if (Bluetooth && mGpsOpen && !mConnected && mAppLogoEnd) {
+                    AutoScanTimer.cancel();
+                    AutoScanTimer = null;
+                    /**添加layout_Value的View進Display**/
+                    Layout_Display.removeAllViews();
+                    Layout_Display.addView(View_Scan);
+                    scanLeDevice(Bluetooth);
+                }
+            } else {
+                if (Bluetooth && mAppLogoEnd) {
+                    AutoScanTimer.cancel();
+                    AutoScanTimer = null;
+                    /**添加layout_Value的View進Display**/
+                    Layout_Display.removeAllViews();
+                    Layout_Display.addView(View_Scan);
+                    scanLeDevice(Bluetooth);
+                }
             }
             super.handleMessage(msg);
         }
@@ -1077,7 +1089,7 @@ public class MainActivity extends AppCompatActivity {
                             mBluetoothLeScanner.stopScan(ScanCallback);
                             if (mScanning) {
                                 Toast.makeText(MainActivity.this,
-                                        "Scan Off",
+                                        "Scan timeout",
                                         Toast.LENGTH_LONG).show();
                                 mScanning = false;
                             }
@@ -1090,6 +1102,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }, SCAN_PERIOD);
                 Toast.makeText(MainActivity.this, "Scanning", Toast.LENGTH_LONG).show();
+                Log.d("test","Enter");
                 mBluetoothLeScanner.startScan(ScanCallback);
                 mScanning = true;
             }
@@ -1175,7 +1188,7 @@ public class MainActivity extends AppCompatActivity {
                     Layout_Display.addView(View_Value_50A);
                 }
                 Log.d("Paul", "Connected");
-                Toast.makeText(MainActivity.this, mConnectDeviceName + " Connected", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, mConnectDeviceName + " connected", Toast.LENGTH_SHORT).show();
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 mConnected = false;
                 Log.d("Paul", "Connect Fail");
