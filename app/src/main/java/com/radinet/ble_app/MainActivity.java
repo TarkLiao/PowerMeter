@@ -998,7 +998,7 @@ public class MainActivity extends AppCompatActivity {
                     scanLeDevice(Bluetooth);
                 }
             } else {
-                if (Bluetooth && mAppLogoEnd) {
+                if (Bluetooth && !mConnected && mAppLogoEnd) {
                     AutoScanTimer.cancel();
                     AutoScanTimer = null;
                     /**添加layout_Value的View進Display**/
@@ -1102,14 +1102,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }, SCAN_PERIOD);
                 Toast.makeText(MainActivity.this, "Scanning", Toast.LENGTH_LONG).show();
-                Log.d("test","Enter");
                 mBluetoothLeScanner.startScan(ScanCallback);
                 mScanning = true;
+            } else {
+                Toast.makeText(MainActivity.this, "Scanning", Toast.LENGTH_LONG).show();
             }
         } else {
-            if (mBluetoothAdapter.isEnabled()) {
-                mBluetoothLeScanner.stopScan(ScanCallback);
-            }
+            mBluetoothLeScanner.stopScan(ScanCallback);
             mScanning = false;
         }
     }
