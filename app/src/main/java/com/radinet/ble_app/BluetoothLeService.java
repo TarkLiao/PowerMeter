@@ -113,7 +113,7 @@ public class BluetoothLeService extends Service {
             }
         }
 
-        /**藉UUID**/
+        /**藉UUID取得Service**/
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {

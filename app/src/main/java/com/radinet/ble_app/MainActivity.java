@@ -9,7 +9,9 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -213,6 +215,12 @@ public class MainActivity extends AppCompatActivity {
     //開啟APP自動Scan
     private static Timer AutoScanTimer;
 
+    private Toast mToast = null;
+
+    //Android 5.0.2 需不斷Scan才能掃到所有裝置
+    Timer mTimerScan;
+
+
     /**
      * 宣告儲存Layout_setting的Default
      **/
@@ -307,12 +315,26 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Layout_Display.removeAllViews();
                 Layout_Display.addView(View_Scan);
+
                 /**進行scan device**/
-                scanLeDevice(mBluetoothAdapter.isEnabled());
+                if (Build.VERSION.SDK_INT >= 23) {
+                    scanLeDevice(mBluetoothAdapter.isEnabled());
+                } else {
+                    if (mTimerScan != null) {
+                        mTimerScan.cancel();
+                        mTimerScan = null;
+                    }
+                    if (mScanning) {
+                        mHandler.removeCallbacks(ScanTimeRun);
+                    }
+                    mHandler.postDelayed(ScanTimeRun, SCAN_PERIOD);
+                    mScanning = false;
+                    mTimerScan = new Timer(true);
+                    //5.0.2須不斷Scan才能掃到裝置
+                    mTimerScan.schedule(new Task_ScanContinued(), 0, 500);
+                }
             }
         });
-
-
     }
 
     /**↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓物件行為↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓**/
@@ -572,8 +594,12 @@ public class MainActivity extends AppCompatActivity {
                             //  進行Connect後，停止Scan
                             if (mScanning && mBluetoothAdapter.isEnabled()) {
                                 mBluetoothLeScanner.stopScan(ScanCallback);
-//                                Toast.makeText(MainActivity.this, "Scan finish", Toast.LENGTH_LONG).show();
+                                mHandler.removeCallbacks(ScanTimeRun);
                                 mScanning = false;
+                                if (mTimerScan != null) {
+                                    mTimerScan.cancel();
+                                    mTimerScan = null;
+                                }
                             }
 
                             //  紀錄連接的DeviceName
@@ -1004,10 +1030,59 @@ public class MainActivity extends AppCompatActivity {
                     /**添加layout_Value的View進Display**/
                     Layout_Display.removeAllViews();
                     Layout_Display.addView(View_Scan);
-                    scanLeDevice(Bluetooth);
+                    mHandler.postDelayed(ScanTimeRun, SCAN_PERIOD);
+                    mTimerScan = new Timer(true);
+                    mScanning = false;
+                    //5.0.2須不斷Scan才能掃到裝置
+                    mTimerScan.schedule(new Task_ScanContinued(), 0, 500);
                 }
             }
             super.handleMessage(msg);
+        }
+    };
+
+    /**
+     * 透過handle，處理持續Scan的行為(5.0.2)
+     **/
+    class Task_ScanContinued extends TimerTask {
+        public void run() {
+            ScanContinuedHandler.sendEmptyMessage(0);
+        }
+    }
+
+    /**
+     * 開始Scan後，不停Stop後Start，但不清除搜尋到的列表，FOR Android 5.0.2
+     * 若不是Scan中，則清除列表且印出Scanning訊息
+     **/
+    private Handler ScanContinuedHandler = new Handler() {
+        Boolean Bluetooth;
+        public void handleMessage(Message msg) {
+            Bluetooth = mBluetoothAdapter.isEnabled();
+            if (Bluetooth) {
+                if (mScanning) {
+                    mBluetoothLeScanner.stopScan(ScanCallback);
+                    mBluetoothLeScanner.startScan(ScanCallback);
+                    ListView_BLE.invalidateViews();
+                } else {
+                    //  清除List
+                    mListBluetoothDevice.clear();
+                    mDevice_list.clear();
+                    ListView_BLE.invalidateViews();
+                    if (mToast == null) {
+                        mToast = Toast.makeText(MainActivity.this, "Scanning", Toast.LENGTH_LONG);
+                    } else {
+                        mToast.setText("Scanning");
+                    }
+                    mToast.show();
+                }
+                mScanning = true;
+            } else {
+                if (mTimerScan != null) {
+                    mTimerScan.cancel();
+                    mTimerScan = null;
+                }
+                mScanning = false;
+            }
         }
     };
 
@@ -1073,45 +1148,61 @@ public class MainActivity extends AppCompatActivity {
      **/
     private void scanLeDevice(final boolean enable) {
         if (enable) {//  當Adapter是開啟的
-            if (!mScanning) {//  當目前沒有在Scan
-                //  清除List
-                mListBluetoothDevice.clear();
-                mDevice_list.clear();
-
-                //  重新顯示listView
-                ListView_BLE.invalidateViews();
-
-                // 停止Scan，當Scan時間超過SCAN_PERIOD
-                mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (mBluetoothAdapter.isEnabled()) {
-                            mBluetoothLeScanner.stopScan(ScanCallback);
-                            if (mScanning) {
-                                Toast.makeText(MainActivity.this,
-                                        "Scan timeout",
-                                        Toast.LENGTH_LONG).show();
-                                mScanning = false;
-                            }
-                        } else {
-                            Toast.makeText(MainActivity.this,
-                                    "Bluetooth is close",
-                                    Toast.LENGTH_LONG).show();
-                            mScanning = false;
-                        }
-                    }
-                }, SCAN_PERIOD);
-                Toast.makeText(MainActivity.this, "Scanning", Toast.LENGTH_LONG).show();
-                mBluetoothLeScanner.startScan(ScanCallback);
-                mScanning = true;
-            } else {
-                Toast.makeText(MainActivity.this, "Scanning", Toast.LENGTH_LONG).show();
+            if (mScanning) {//  當Scanning，關閉Scan，取消正在postDelayed的ScanCallback
+                mBluetoothLeScanner.stopScan(ScanCallback);
+                mHandler.removeCallbacks(ScanTimeRun);
             }
+            //  清除List
+            mListBluetoothDevice.clear();
+            mDevice_list.clear();
+
+            //  重新顯示listView
+            ListView_BLE.invalidateViews();
+
+            // 當Scan時間超過SCAN_PERIOD，執行Runable_ScanTime
+            mHandler.postDelayed(ScanTimeRun, SCAN_PERIOD);
+            mBluetoothLeScanner.startScan(ScanCallback);
+
+            if (mToast == null) {
+                mToast = Toast.makeText(MainActivity.this, "Scanning", Toast.LENGTH_LONG);
+            } else {
+                mToast.setText("Scanning");
+            }
+            mToast.show();
+            mScanning = true;
         } else {
-            mBluetoothLeScanner.stopScan(ScanCallback);
             mScanning = false;
         }
     }
+
+    /**
+     * Scan Device finish時間
+     **/
+    private Runnable ScanTimeRun = new Runnable() {
+        Boolean Bluetooth;
+        @Override
+        public void run() {
+            Bluetooth = mBluetoothAdapter.isEnabled();
+            if (mTimerScan != null) {
+                mTimerScan.cancel();
+                mTimerScan = null;
+            }
+            if (mBluetoothAdapter.isEnabled()) {
+                mBluetoothLeScanner.stopScan(ScanCallback);
+                if (mToast == null) {
+                    mToast = Toast.makeText(MainActivity.this, "Scan finish", Toast.LENGTH_LONG);
+                } else {
+                    mToast.setText("Scan finish");
+                }
+                mToast.show();
+            } else {
+                Toast.makeText(MainActivity.this,
+                        "Bluetooth is close",
+                        Toast.LENGTH_LONG).show();
+                mScanning = false;
+            }
+        }
+    };
 
     /**
      * 設定Scan CallBack
@@ -1124,14 +1215,14 @@ public class MainActivity extends AppCompatActivity {
             addBluetoothDevice(result.getDevice());
         }
 
-        //  Return所有Scan到的設備
-        @Override
-        public void onBatchScanResults(List<ScanResult> results) {
-            super.onBatchScanResults(results);
-            for (ScanResult result : results) {
-                addBluetoothDevice(result.getDevice());
-            }
-        }
+//        //  Return所有Scan到的設備
+//        @Override
+//        public void onBatchScanResults(List<ScanResult> results) {
+//            super.onBatchScanResults(results);
+//            for (ScanResult result : results) {
+//                addBluetoothDevice(result.getDevice());
+//            }
+//        }
 
         //  Scan失敗
         @Override
@@ -1187,11 +1278,21 @@ public class MainActivity extends AppCompatActivity {
                     Layout_Display.addView(View_Value_50A);
                 }
                 Log.d("Paul", "Connected");
-                Toast.makeText(MainActivity.this, mConnectDeviceName + " connected", Toast.LENGTH_SHORT).show();
+                if (mToast == null) {
+                    mToast = Toast.makeText(MainActivity.this, mConnectDeviceName + " connected", Toast.LENGTH_SHORT);
+                } else {
+                    mToast.setText(mConnectDeviceName + " connected");
+                }
+                mToast.show();
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 mConnected = false;
                 Log.d("Paul", "Connect Fail");
-                Toast.makeText(MainActivity.this, mConnectDeviceName + " disconnected", Toast.LENGTH_SHORT).show();
+                if (mToast == null) {
+                    mToast = Toast.makeText(MainActivity.this, mConnectDeviceName + " disconnected", Toast.LENGTH_SHORT);
+                } else {
+                    mToast.setText(mConnectDeviceName + " disconnected");
+                }
+                mToast.show();
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
