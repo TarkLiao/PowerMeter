@@ -60,9 +60,11 @@ public class BluetoothLeService extends Service {
  key_char_UUID   = CBUUID(string:"FFE1") //FFE0:FFE1
  * **/
     private BluetoothGattCharacteristic mReadCharacteristric = null;
+    private BluetoothGattCharacteristic mWriteCharacteristric = null;
     public static final UUID TRANSFER_SERVICE_READ = UUID.fromString("0000FFE0-0000-1000-8000-00805F9B34FB");
     public static final UUID TRANSFER_CHARACTERISTIC_READ = UUID.fromString("0000FFE2-0000-1000-8000-00805F9B34FB");
-
+    public static final UUID TRANSFER_SERVICE_WRITE = UUID.fromString("0000FFF0-0000-1000-8000-00805F9B34FB");
+    public static final UUID TRANSFER_CHARACTERISTIC_WRITE = UUID.fromString("0000FFF5-0000-1000-8000-00805F9B34FB");
     public class LocalBinder extends Binder {
         BluetoothLeService getService() {
             return BluetoothLeService.this;
@@ -126,6 +128,13 @@ public class BluetoothLeService extends Service {
                         mBluetoothGatt.setCharacteristicNotification(mReadCharacteristric, true);
                     }
                 }
+                BluetoothGattService btGattWriteService = mBluetoothGatt.getService(TRANSFER_SERVICE_WRITE);
+                if (btGattWriteService != null) {
+                    mWriteCharacteristric = btGattWriteService.getCharacteristic(TRANSFER_CHARACTERISTIC_WRITE);
+                    if (mWriteCharacteristric != null) {
+                        mBluetoothGatt.setCharacteristicNotification(mWriteCharacteristric, true);
+                    }
+                }
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
             }
@@ -140,6 +149,14 @@ public class BluetoothLeService extends Service {
             }
         }
 
+        @Override
+        public void onCharacteristicWrite(BluetoothGatt gatt,
+                                         BluetoothGattCharacteristic characteristic,
+                                         int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+            }
+        }
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {

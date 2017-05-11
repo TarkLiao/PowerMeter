@@ -63,7 +63,7 @@
                 android:ellipsize="end"
                 android:gravity="center"
                 android:background="@drawable/orange_shape"
-                android:text="000"
+                android:text="000.0"
                 android:textColor="@color/Color_White"
                 android:textSize="40sp" />
             <TextView

@@ -29,14 +29,14 @@
             android:scaleType="fitXY"
             app:srcCompat="@drawable/icon_value"/>
         <TextView
+            android:id="@+id/Textview_Logo"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="POWER WATCHDOG"
             android:gravity="center"
             android:textColor="@color/Color_Black"
             android:textSize="25sp"
-            android:textStyle="bold"
-            android:layout_below="@+id/view" />
+            android:textStyle="bold" />
 
     </LinearLayout>
 

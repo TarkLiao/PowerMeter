@@ -2,7 +2,12 @@ package com.radinet.ble_app;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
+import android.app.KeyguardManager;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -21,13 +26,18 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.AnimationDrawable;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.PowerManager;
 import android.os.Vibrator;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
@@ -40,6 +50,8 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -65,8 +77,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -101,6 +115,12 @@ public class MainActivity extends AppCompatActivity {
      * 宣告Button OnClick後的行為
      **/
     private ButtonPressListener ButtonPressListen;
+
+    /**
+     * 宣告ImageView，作為Scan的轉圈圈動畫
+     */
+    private ImageView Imageview_scan;
+    private AnimationDrawable AnimationDrawable;
 
     /**
      * 宣告Display用的主Page
@@ -177,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_FINE_LOCATION_PERMISSION = 102;
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothLeScanner mBluetoothLeScanner;
-    private static final long SCAN_PERIOD = 10000;
+    private static final long SCAN_PERIOD = 5000;
     private boolean mScanning;
     private boolean mConnected = false;
 
@@ -186,6 +206,15 @@ public class MainActivity extends AppCompatActivity {
 
     //  搜尋到的BluetoothDevice名稱
     List<String> mDevice_list;
+
+    //  搜尋到的BluetoothDevice adress
+    List<String> mDeviceAdress_list;
+
+    //  用作儲存已連接過的Bluetooth Device Address
+    List<String> mConnected_list;
+
+    //Scan到的Device數量
+    private int mScanDeviceNum;
 
     ArrayAdapter<String> mAdapterLeScanResult;
 
@@ -215,11 +244,17 @@ public class MainActivity extends AppCompatActivity {
     //開啟APP自動Scan
     private static Timer AutoScanTimer;
 
+    //Toast訊息用，解決訊息會重疊的情況
     private Toast mToast = null;
+
+    //系統通知用(通知匣)
+    NotificationManager mNotifiyManager;
+
+    //點亮螢幕用
+    PowerManager.WakeLock wl;
 
     //Android 5.0.2 需不斷Scan才能掃到所有裝置
     Timer mTimerScan;
-
 
     /**
      * 宣告儲存Layout_setting的Default
@@ -251,6 +286,9 @@ public class MainActivity extends AppCompatActivity {
 
         /**確認setting檔案是否存在，存在的話直接讀取值，不存在的話create檔案並給予Default**/
         CheckSettingFileAndCheckData();
+
+        /**確認connect過的Device，存在讀取DeviceName，不存在則無**/
+        CheckConnectedData();
 
         /**將Setting restore到textview上**/
         InitSettingView();
@@ -290,11 +328,17 @@ public class MainActivity extends AppCompatActivity {
             finish();
         }
 
+        //  設置Scan動畫，屬性設定不可視
+        Imageview_scan.setImageResource(R.drawable.scan_animation);
+        AnimationDrawable = (AnimationDrawable) Imageview_scan.getDrawable();
+        Imageview_scan.setVisibility(View.INVISIBLE);
+
         /**取得Bluetooth Adapter和Bluetooth Scanner**/
         getBluetoothAdapterAndLeScanner();
 
         mListBluetoothDevice = new ArrayList<>();
         mDevice_list = new ArrayList<>();
+        mDeviceAdress_list = new ArrayList<>();
         mHandler = new Handler();
 
         /**用Adapter設定ListView需要顯示的內容及模式**/
@@ -329,6 +373,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                     mHandler.postDelayed(ScanTimeRun, SCAN_PERIOD);
                     mScanning = false;
+                    Imageview_scan.setVisibility(View.INVISIBLE);
+                    AnimationDrawable.stop();
                     mTimerScan = new Timer(true);
                     //5.0.2須不斷Scan才能掃到裝置
                     mTimerScan.schedule(new Task_ScanContinued(), 0, 500);
@@ -596,6 +642,8 @@ public class MainActivity extends AppCompatActivity {
                                 mBluetoothLeScanner.stopScan(ScanCallback);
                                 mHandler.removeCallbacks(ScanTimeRun);
                                 mScanning = false;
+                                Imageview_scan.setVisibility(View.INVISIBLE);
+                                AnimationDrawable.stop();
                                 if (mTimerScan != null) {
                                     mTimerScan.cancel();
                                     mTimerScan = null;
@@ -605,29 +653,11 @@ public class MainActivity extends AppCompatActivity {
                             //  紀錄連接的DeviceName
                             mConnectDeviceName = device.getName();
 
-                            if (mBluetoothLeService == null) {
-                                //  透過 Intent 方式帶出另一個畫面 DeviceControlActivity
-                                //  同時把藍芽位址資料也傳過去，創建畫面的同時也建立 BluetoothLeService 類別 (衍生自 service 類別)
-                                //  這裡利用一個技巧，讓服務在背景執行，然後將畫面與服務 bind 在一起
-                                Intent gattServiceIntent = new Intent(MainActivity.this, BluetoothLeService.class);
-                                bindService(gattServiceIntent, ServiceConnection, BIND_AUTO_CREATE);
+                            // 紀錄連接過的Device並進行排列，越後面時間越新
+                            WriteConnectedDevice ();
 
-                                //  藍芽服務有任何訊息要通知 UI 畫面，向系統註冊 callback 函式用來處理服務的訊息
-                                registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-
-                            } else {
-                                if (mBluetoothLeService.mBluetoothGatt != null && !mDeviceAddress.equals(mBluetoothLeService.mBluetoothDeviceAddress)) {
-                                    //  如果連接的裝置跟上次不同，則將Gatt釋放掉
-                                    mBluetoothLeService.mBluetoothGatt.disconnect();
-                                    mBluetoothLeService.mBluetoothGatt.close();
-                                    final boolean result = mBluetoothLeService.connect(mDeviceAddress);
-                                    Log.d(BluetoothLeService.TAG, "Connect request result=" + result);
-                                } else if (mBluetoothLeService.mBluetoothGatt != null && mDeviceAddress.equals(mBluetoothLeService.mBluetoothDeviceAddress)) {
-                                    //  如果連接的裝置跟上次相同，則重連
-                                    final boolean result = mBluetoothLeService.connect(mDeviceAddress);
-                                    Log.d(BluetoothLeService.TAG, "Connect request result=" + result);
-                                }
-                            }
+                            //  進行Device連接
+                            ConnectDevice (mDeviceAddress);
                         }
                     })
                     .show();
@@ -664,6 +694,8 @@ public class MainActivity extends AppCompatActivity {
         Background_Imageview.bringToFront();
         Layout_Logo.bringToFront();
 
+        TextView Logo_tv = (TextView) findViewById(R.id.Textview_Logo);
+        Logo_tv.setTypeface(Typeface.createFromAsset(getAssets(), "fonts/anton.ttf"));
         Handler StartPicturehandler = new Handler();
         StartPicturehandler.postDelayed(new Runnable() {
             @Override
@@ -719,6 +751,9 @@ public class MainActivity extends AppCompatActivity {
 
         //  ListView與物件做連結
         ListView_BLE = (ListView) View_Scan.findViewById(R.id.ListView_BLE);
+
+        //  ImageView與物件做連結
+        Imageview_scan = (ImageView)View_Scan.findViewById(R.id.Imageview_animation);
     }
     /**
      * 將宣告與物件做連結
@@ -837,6 +872,38 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     * 確認connect過的Device，存在則讀取並儲存DeviceName，不存在則無
+     **/
+    private void CheckConnectedData() {
+        String Content;
+        String Filename_Connected = "Connected.txt";
+        File File_Connected = new File(getFilesDir().getAbsolutePath() + "/" + Filename_Connected);
+        mConnected_list = new ArrayList<>();
+
+        if (File_Connected.exists()) {
+            Log.d("Test", "File_Connected Exists");
+            try {
+                //讀取File_Connected，存進mConnected_list
+                FileInputStream Input = openFileInput(Filename_Connected);
+                DataInputStream DataInput = new DataInputStream(Input);
+                BufferedReader Reader = new BufferedReader(new InputStreamReader(DataInput));
+                Content = Reader.readLine();
+                Log.d("test", "Connect Content:" + Content);
+                Input.close();
+
+                String[] token = Content.split(",");
+                for (String tmp : token) {
+                    mConnected_list.add(tmp);
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
      * 將Setting 傳到textview上
      **/
     private void InitSettingView() {
@@ -854,16 +921,66 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     * 紀錄連接過的Device並進行排列，越後面時間越新
+     */
+    private void WriteConnectedDevice () {
+        String Filename_Connected = "Connected.txt";
+        File File_Connected = new File(getFilesDir().getAbsolutePath() + "/" + Filename_Connected);
+
+        if (!File_Connected.exists()) {
+            //如果File_Connected不存在，則直接將連接的裝置名稱存進檔案
+            Log.d("Test", "File_Connected Not Exists");
+            try {
+                FileOutputStream Output = openFileOutput(Filename_Connected, Context.MODE_PRIVATE);
+                Output.write(mDeviceAddress.toString().getBytes());
+                Output.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            // 若檔案存在，代表mConnected_list有資料
+            // 連線的Device若有在mConnected_list內，先刪掉再加入，則會擺在最後面(latest)
+            // 若mConnected_list沒有，則直接擺最後面
+            Log.d("Test", "File_Connected Exists");
+            if (mConnected_list.contains(mDeviceAddress)) {
+                Log.d("test", String.valueOf(mConnected_list.indexOf(mDeviceAddress)));
+                mConnected_list.remove(mDeviceAddress);
+                mConnected_list.add(mDeviceAddress);
+                Log.d("test2", String.valueOf(mConnected_list.indexOf(mDeviceAddress)));
+            } else {
+                mConnected_list.add(mDeviceAddress);
+            }
+            Log.d ("test3", String.valueOf(mConnected_list.size()));
+
+            //  將排列好順序的mConnected_list寫入檔案
+            try {
+                FileOutputStream Output = openFileOutput(Filename_Connected, Context.MODE_PRIVATE);
+                for (String tmp : mConnected_list) {
+                    Output.write((tmp + ",").toString().getBytes());
+                }
+                Output.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
      * 跳出Dialog視窗
      * String AlarmString: Dialog的視窗內容
      **/
-    private void AlarmDialog(String AlarmString) {
+    private void AlarmDialog(final int NotifyId, String AlarmString) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
         builder.setTitle("Warning")
                 .setMessage(AlarmString)
                 .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
+                        mNotifiyManager.cancel(NotifyId);
                     }
                 });
         AlertDialog about_dialog = builder.create();
@@ -1030,9 +1147,13 @@ public class MainActivity extends AppCompatActivity {
                     /**添加layout_Value的View進Display**/
                     Layout_Display.removeAllViews();
                     Layout_Display.addView(View_Scan);
+
+                    mScanning = false;
+                    Imageview_scan.setVisibility(View.INVISIBLE);
+                    AnimationDrawable.stop();
+
                     mHandler.postDelayed(ScanTimeRun, SCAN_PERIOD);
                     mTimerScan = new Timer(true);
-                    mScanning = false;
                     //5.0.2須不斷Scan才能掃到裝置
                     mTimerScan.schedule(new Task_ScanContinued(), 0, 500);
                 }
@@ -1064,9 +1185,11 @@ public class MainActivity extends AppCompatActivity {
                     mBluetoothLeScanner.startScan(ScanCallback);
                     ListView_BLE.invalidateViews();
                 } else {
+                    mScanDeviceNum = 0;
                     //  清除List
                     mListBluetoothDevice.clear();
                     mDevice_list.clear();
+                    mDeviceAdress_list.clear();
                     ListView_BLE.invalidateViews();
                     if (mToast == null) {
                         mToast = Toast.makeText(MainActivity.this, "Scanning", Toast.LENGTH_LONG);
@@ -1074,6 +1197,8 @@ public class MainActivity extends AppCompatActivity {
                         mToast.setText("Scanning");
                     }
                     mToast.show();
+                    Imageview_scan.setVisibility(View.VISIBLE);
+                    AnimationDrawable.start();
                 }
                 mScanning = true;
             } else {
@@ -1082,7 +1207,10 @@ public class MainActivity extends AppCompatActivity {
                     mTimerScan = null;
                 }
                 mScanning = false;
+                Imageview_scan.setVisibility(View.INVISIBLE);
+                AnimationDrawable.stop();
             }
+            super.handleMessage(msg);
         }
     };
 
@@ -1141,12 +1269,17 @@ public class MainActivity extends AppCompatActivity {
             mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
         }
         mScanning = false;
+        if (Imageview_scan.VISIBLE == View.VISIBLE) {
+            Imageview_scan.setVisibility(View.INVISIBLE);
+            AnimationDrawable.stop();
+        }
     }
 
     /**
      * 進行scan device
      **/
     private void scanLeDevice(final boolean enable) {
+        mScanDeviceNum = 0;
         if (enable) {//  當Adapter是開啟的
             if (mScanning) {//  當Scanning，關閉Scan，取消正在postDelayed的ScanCallback
                 mBluetoothLeScanner.stopScan(ScanCallback);
@@ -1155,6 +1288,7 @@ public class MainActivity extends AppCompatActivity {
             //  清除List
             mListBluetoothDevice.clear();
             mDevice_list.clear();
+            mDeviceAdress_list.clear();
 
             //  重新顯示listView
             ListView_BLE.invalidateViews();
@@ -1170,8 +1304,12 @@ public class MainActivity extends AppCompatActivity {
             }
             mToast.show();
             mScanning = true;
+            Imageview_scan.setVisibility(View.VISIBLE);
+            AnimationDrawable.start();
         } else {
             mScanning = false;
+            Imageview_scan.setVisibility(View.INVISIBLE);
+            AnimationDrawable.stop();
         }
     }
 
@@ -1187,20 +1325,36 @@ public class MainActivity extends AppCompatActivity {
                 mTimerScan.cancel();
                 mTimerScan = null;
             }
-            if (mBluetoothAdapter.isEnabled()) {
+            if (Bluetooth) {
                 mBluetoothLeScanner.stopScan(ScanCallback);
-                if (mToast == null) {
-                    mToast = Toast.makeText(MainActivity.this, "Scan finish", Toast.LENGTH_LONG);
+
+                //Scan到的裝置數量不是0
+                if (mScanDeviceNum != 0) {
+                    //scan finish 自動連線
+                    //條件 1.未Connect 2.有連接過的Device且存在mConnected_list中
+                    AutoConnect();
+                    if (mToast == null) {
+                        mToast = Toast.makeText(MainActivity.this, "Scan finish", Toast.LENGTH_LONG);
+                    } else {
+                        mToast.setText("Scan finish");
+                    }
                 } else {
-                    mToast.setText("Scan finish");
+                    //Device not found
+                    if (mToast == null) {
+                        mToast = Toast.makeText(MainActivity.this, "Device not found", Toast.LENGTH_LONG);
+                    } else {
+                        mToast.setText("Device not found");
+                    }
                 }
                 mToast.show();
             } else {
                 Toast.makeText(MainActivity.this,
                         "Bluetooth is close",
                         Toast.LENGTH_LONG).show();
-                mScanning = false;
             }
+            mScanning = false;
+            Imageview_scan.setVisibility(View.INVISIBLE);
+            AnimationDrawable.stop();
         }
     };
 
@@ -1237,10 +1391,12 @@ public class MainActivity extends AppCompatActivity {
             if (device.getName() != null) {
                 //  判斷Device存不存在BluetoothList
                 if (!mListBluetoothDevice.contains(device)) {
+                    mScanDeviceNum ++;
                     //  將Device存進BluetoothList
                     mListBluetoothDevice.add(device);
                     //  將Device名稱存進Device_list
                     mDevice_list.add(device.getName().toString());
+                    mDeviceAdress_list.add(device.getAddress().toString());
                     //  重新顯示listView
                     ListView_BLE.invalidateViews();
                 }
@@ -1292,6 +1448,7 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     mToast.setText(mConnectDeviceName + " disconnected");
                 }
+                SystemNotification(1, "Device", mConnectDeviceName + " disconnected");
                 mToast.show();
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
@@ -1311,25 +1468,23 @@ public class MainActivity extends AppCompatActivity {
         double Value_Energy_30A;
         double Value_Energy_50A;
 
-        mValue_Volt_30A = new BigDecimal(Byte42double(data, 3) / 10000)
-                .setScale(0, BigDecimal.ROUND_HALF_UP)
-                .doubleValue();
-        mValue_Amp_30A = new BigDecimal(Byte42double(data, 7) / 10000)
-                .setScale(0, BigDecimal.ROUND_HALF_UP)
-                .doubleValue();
+        mValue_Volt_30A = Byte42double(data, 3) / 10000;
+        mValue_Amp_30A = Byte42double(data, 7) / 10000;
         Value_Watt_30A = Byte42double(data, 11) / 10000;
         Value_Energy_30A = Byte42double(data, 15) / 10000;
 
         Value_Watt_50A = 0;
         Value_Energy_50A = 0;
+        mValue_Volt_50A = 0;
+        mValue_Amp_50A = 0;
 
-        mValue_Watt = new BigDecimal(Value_Watt_30A + Value_Watt_50A)
-                .setScale(0, BigDecimal.ROUND_HALF_UP)
-                .doubleValue();
-
-        mValue_Energy = new BigDecimal(Value_Energy_30A + Value_Energy_50A)
-                .setScale(0, BigDecimal.ROUND_HALF_UP)
-                .doubleValue();
+        if (isPage30A) {
+            mValue_Watt = Value_Watt_30A;
+            mValue_Energy = Value_Energy_30A;
+        } else {
+            mValue_Watt = Value_Watt_30A + Value_Watt_50A;
+            mValue_Energy = Value_Energy_30A + Value_Energy_50A;
+        }
 //        Log.d("print data", "Volt:" + String.valueOf(mValue_Volt_30A) + " Amp:" + String.valueOf(mValue_Amp_30A) + " Watt:" + String.valueOf(mValue_Watt_30A) + "Energy" + String.valueOf(mValue_Energy_30A));
     }
 
@@ -1351,12 +1506,19 @@ public class MainActivity extends AppCompatActivity {
      * 進行Refresh的行為
      **/
     private void Refresh(byte[] Data) {
+        int NotifiyId;
+        String Tmp_Max;
+        String Tmp_Min;
         //顯示幾位
         DecimalFormat DecimalFormat_Common = new DecimalFormat("#");
-        DecimalFormat DecimalFormat_Amp = new DecimalFormat("#.#");
-
+        DecimalFormat DecimalFormat_Energy = new DecimalFormat("#.0");
+        DecimalFormat DecimalFormat_Amp = new DecimalFormat("#.0");
+        DecimalFormat_Common.setRoundingMode(RoundingMode.HALF_UP);
+        DecimalFormat_Energy.setRoundingMode(RoundingMode.HALF_UP);
+        DecimalFormat_Amp.setRoundingMode(RoundingMode.HALF_UP);
         //位數不足補零
         DecimalFormat_Common.applyPattern("0");
+        DecimalFormat_Energy.applyPattern("0.0");
         DecimalFormat_Amp.applyPattern("0.0");
 
         if (Data != null && Data[0] == 0x01 && Data[1] == 0x03 && Data[2] == 0x20) {
@@ -1377,36 +1539,52 @@ public class MainActivity extends AppCompatActivity {
 
         Vibrator vb = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
-        //  當30A的Energy超出setting範圍，改變字體顏色跳出Dialog視窗及震動
-        if (isPage30A && mValue_Energy > Integer.parseInt(Limit_Value_30A.Energy_Max)) {
+        //  當Energy超出setting範圍，改變字體顏色跳出Dialog視窗及震動
+        NotifiyId = 2;
+        if (isPage30A && Double.parseDouble(DecimalFormat_Energy.format(mValue_Energy)) >
+                Integer.parseInt(Limit_Value_30A.Energy_Max)) {
             if (!mFlag_AlarmEnergy_30A) {
                 mFlag_AlarmEnergy_30A = true;
-                AlarmDialog("Over Energy scope for 30A!");
+                AlarmDialog(NotifiyId, "Over Energy scope!");
                 vb.vibrate(2000); //震動
+                SystemNotification(NotifiyId, "Alarm", "Over Energy scope!");
             }
             LedText_Value_Energy_30A.setTextColor(Color.rgb(255, 0, 0));
-        } else if (!isPage30A && mValue_Energy > Integer.parseInt(Limit_Value_50A.Energy_Max)){
+        } else if (!isPage30A && Double.parseDouble(DecimalFormat_Energy.format(mValue_Energy)) >
+                Integer.parseInt(Limit_Value_50A.Energy_Max)){
             if (!mFlag_AlarmEnergy_50A) {
                 mFlag_AlarmEnergy_50A = true;
-                AlarmDialog("Over Energy scope for 50A!");
-                vb.vibrate(2000); //震動
+                AlarmDialog(NotifiyId, "Over Energy scope!");
+                SystemNotification(NotifiyId, "Alarm", "Over Energy scope!");
             }
+            LedText_Value_Energy_30A.setTextColor(Color.rgb(255, 0, 0));
         } else {
             mFlag_AlarmEnergy_30A = false;
             mFlag_AlarmEnergy_50A = false;
             LedText_Value_Energy_30A.setTextColor(Color.rgb(255, 255, 255));
         }
-        LedText_Value_Energy_30A.setText(DecimalFormat_Common.format(mValue_Energy));
+        LedText_Value_Energy_30A.setText(DecimalFormat_Energy.format(mValue_Energy));
 
+        //  Watt
         LedText_Value_Watt_30A.setText(DecimalFormat_Common.format(mValue_Watt));
 
-        //  當30A的Volt超出setting範圍，改變字體顏色、跳出Dialog視窗及震動
-        if (mValue_Volt_30A > Integer.parseInt(Limit_Value_30A.Volt_Max) ||
-                mValue_Volt_30A < Integer.parseInt(Limit_Value_30A.Volt_Min)) {
+        //  根據當前是30A/50A設定，當Volt超出setting範圍，改變字體顏色、跳出Dialog視窗及震動
+        NotifiyId = 3;
+        if (isPage30A) {
+            Tmp_Max = Limit_Value_30A.Volt_Max;
+            Tmp_Min = Limit_Value_30A.Volt_Min;
+        } else {
+            Tmp_Max = Limit_Value_50A.Volt_Max;
+            Tmp_Min = Limit_Value_50A.Volt_Min;
+        }
+        if (Double.parseDouble(DecimalFormat_Common.format(mValue_Volt_30A)) >
+                Integer.parseInt(Tmp_Max) ||
+                Double.parseDouble(DecimalFormat_Common.format(mValue_Volt_30A)) <
+                        Integer.parseInt(Tmp_Min)) {
             if (!mFlag_AlarmVolt_30A) {
                 mFlag_AlarmVolt_30A = true;
-                AlarmDialog("Over Volt scope for 30A!");
-                vb.vibrate(2000); //震動
+                AlarmDialog(NotifiyId, "Over Volt scope for 30A!");
+                SystemNotification(NotifiyId, "Alarm", "Over Volt scope for 30A!");
             }
             LedText_Value_Volt_30A.setTextColor(Color.rgb(255, 0, 0));
         } else {
@@ -1415,12 +1593,47 @@ public class MainActivity extends AppCompatActivity {
         }
         LedText_Value_Volt_30A.setText(DecimalFormat_Common.format(mValue_Volt_30A));
 
-        //  當30A的Amp超出setting範圍，改變字體顏色、跳出Dialog視窗及震動
-        if (mValue_Amp_30A > Integer.parseInt(Limit_Value_30A.Amp_Max)) {
+//        if (isPage30A && (Double.parseDouble(DecimalFormat_Common.format(mValue_Volt_30A)) >
+//                Integer.parseInt(Limit_Value_30A.Volt_Max) ||
+//                Double.parseDouble(DecimalFormat_Common.format(mValue_Volt_30A)) <
+//                Integer.parseInt(Limit_Value_30A.Volt_Min))) {
+//            if (!mFlag_AlarmVolt_30A) {
+//                mFlag_AlarmVolt_30A = true;
+//                AlarmDialog(NotifiyId, "Over Volt scope for 30A!");
+//                vb.vibrate(2000); //震動
+//                SystemNotification(NotifiyId, "Alarm", "Over Volt scope for 30A!");
+//            }
+//            LedText_Value_Volt_30A.setTextColor(Color.rgb(255, 0, 0));
+//        } else if (!isPage30A && (Double.parseDouble(DecimalFormat_Common.format(mValue_Volt_30A)) >
+//                Integer.parseInt(Limit_Value_50A.Volt_Max) ||
+//                Double.parseDouble(DecimalFormat_Common.format(mValue_Volt_30A)) <
+//                Integer.parseInt(Limit_Value_50A.Volt_Min))) {
+//            if (!mFlag_AlarmVolt_30A) {
+//                mFlag_AlarmVolt_30A = true;
+//                AlarmDialog(NotifiyId, "Over Volt scope for 30A!");
+//                vb.vibrate(2000); //震動
+//                SystemNotification(NotifiyId, "Alarm", "Over Volt scope for 30A!");
+//            }
+//            LedText_Value_Volt_30A.setTextColor(Color.rgb(255, 0, 0));
+//        } else {
+//            mFlag_AlarmVolt_30A = false;
+//            LedText_Value_Volt_30A.setTextColor(Color.rgb(255, 255, 255));
+//        }
+//        LedText_Value_Volt_30A.setText(DecimalFormat_Common.format(mValue_Volt_30A));
+
+        //   根據當前是30A/50A設定，當Amp超出setting範圍，改變字體顏色、跳出Dialog視窗及震動
+        NotifiyId = 4;
+        if (isPage30A) {
+            Tmp_Max = Limit_Value_30A.Amp_Max;
+        } else {
+            Tmp_Max = Limit_Value_50A.Amp_Max;
+        }
+        if (Double.parseDouble(DecimalFormat_Amp.format(mValue_Amp_30A)) >
+                Integer.parseInt(Tmp_Max)) {
             if (!mFlag_AlarmAmp_30A) {
                 mFlag_AlarmAmp_30A = true;
-                AlarmDialog("Over Amp scope for 30A!");
-                vb.vibrate(2000); //震動
+                AlarmDialog(NotifiyId, "Over Amp scope for 30A!");
+                SystemNotification(NotifiyId, "Alarm", "Over Amp scope for 30A!");
             }
             LedText_Value_Amp_30A.setTextColor(Color.rgb(255, 0, 0));
         } else {
@@ -1429,14 +1642,18 @@ public class MainActivity extends AppCompatActivity {
         }
         LedText_Value_Amp_30A.setText(DecimalFormat_Amp.format(mValue_Amp_30A));
 
+
         if (!isPage30A) {
             //  當50A的Volt超出setting範圍，改變字體顏色、跳出Dialog視窗及震動
-            if (mValue_Volt_50A > Integer.parseInt(Limit_Value_50A.Volt_Max) ||
-                    mValue_Volt_50A < Integer.parseInt(Limit_Value_50A.Volt_Min)) {
+            NotifiyId = 5;
+            if (Double.parseDouble(DecimalFormat_Common.format(mValue_Volt_50A)) >
+                    Integer.parseInt(Limit_Value_50A.Volt_Max) ||
+                    Double.parseDouble(DecimalFormat_Common.format(mValue_Volt_50A)) <
+                    Integer.parseInt(Limit_Value_50A.Volt_Min)) {
                 if (!mFlag_AlarmVolt_50A) {
                     mFlag_AlarmVolt_50A = true;
-                    AlarmDialog("Over Volt scope for 50A!");
-                    vb.vibrate(2000); //震動
+                    AlarmDialog(NotifiyId, "Over Volt scope for 50A!");
+                    SystemNotification(NotifiyId, "Alarm", "Over Volt scope for 50A!");
                 }
                 LedText_Value_Volt_50A.setTextColor(Color.rgb(255, 0, 0));
             } else {
@@ -1446,11 +1663,12 @@ public class MainActivity extends AppCompatActivity {
             LedText_Value_Volt_50A.setText(DecimalFormat_Common.format(mValue_Volt_50A));
 
             //  當50A的Amp超出setting範圍，改變字體顏色、跳出Dialog視窗及震動
-            if (mValue_Amp_50A > Integer.parseInt(Limit_Value_50A.Amp_Max)) {
+            NotifiyId = 6;
+            if (Double.parseDouble(DecimalFormat_Amp.format(mValue_Amp_50A)) > Integer.parseInt(Limit_Value_50A.Amp_Max)) {
                 if (!mFlag_AlarmAmp_50A) {
                     mFlag_AlarmAmp_50A = true;
-                    AlarmDialog("Over Amp scope for 50A!");
-                    vb.vibrate(2000); //震動
+                    AlarmDialog(NotifiyId, "Over Amp scope for 50A!");
+                    SystemNotification(NotifiyId, "Alarm", "Over Amp scope for 50A!");
                 }
                 LedText_Value_Amp_50A.setTextColor(Color.rgb(255, 0, 0));
             } else {
@@ -1458,6 +1676,120 @@ public class MainActivity extends AppCompatActivity {
                 LedText_Value_Amp_50A.setTextColor(Color.rgb(255, 255, 255));
             }
             LedText_Value_Amp_50A.setText(DecimalFormat_Amp.format(mValue_Amp_50A));
+        }
+    }
+
+    /**
+     * 顯示系統通知，音效
+     * @param notifyID  進行通知的ID，同ID可以覆蓋
+     * @param Title     要顯示的標題
+     * @param Content   要顯示的內容
+     */
+    private void SystemNotification (int notifyID, String Title, String Content) {
+        // 點擊通知後是否要自動移除掉通知
+        final boolean autoCancel = true;
+
+        // PendingIntent的Request Code
+        final int requestCode = notifyID;
+
+        // 目前Activity的Intent
+        final Intent intent = getIntent();
+
+        // ONE_SHOT：PendingIntent只使用一次；CANCEL_CURRENT：PendingIntent執行前會先結束掉之前的；NO_CREATE：沿用先前的PendingIntent，不建立新的PendingIntent；UPDATE_CURRENT：更新先前PendingIntent所帶的額外資料，並繼續沿用
+        final int flags = PendingIntent.FLAG_CANCEL_CURRENT;
+
+        // 取得PendingIntent
+        final PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), requestCode, intent, flags);
+
+        // 取得系統的通知服務
+        mNotifiyManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // 建立通知
+        final Notification notification = new Notification.Builder(getApplicationContext())
+                .setSmallIcon(R.drawable.small_value)
+                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.large_value))
+                .setContentTitle(Title)
+                .setContentText(Content)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(autoCancel)
+                .setPriority(Notification.PRIORITY_HIGH)
+                .setDefaults(Notification.DEFAULT_VIBRATE | Notification.DEFAULT_SOUND)
+                .build();
+
+        // 發送通知
+        mNotifiyManager.notify(notifyID, notification);
+
+//        Window window = this.getWindow();
+//        window.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+////        window.addFlags(WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON);
+//        window.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+
+        //點亮螢幕
+        PowerManager pm=(PowerManager) getSystemService(Context.POWER_SERVICE);
+        //獲取PowerManager.WakeLock對象,後面的參數|表示同時傳入兩個值,最後的是LogCat裡用的Tag
+        wl = pm.newWakeLock(PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.SCREEN_DIM_WAKE_LOCK , "bright");
+        wl.acquire();
+        mHandler.postDelayed(new Runnable(){
+            @Override
+            public void run() {
+                wl.release();
+            }}, 2000);
+    }
+
+    /**
+     * 若未Connect，且有連接過的Device，則自動連線
+     * 從mConnected_list最優先的開始判斷是否有Scan到，
+     * 如果有則連線，連線後將裝置優先度提高，如果沒有則往mConnected_list優先度低一階的找，直到找完
+     */
+    private void AutoConnect () {
+        if (!mConnected && !mConnected_list.isEmpty()) {
+            int ConnectedNum = mConnected_list.size();
+            while (ConnectedNum > 0) {
+                int device_index = mDeviceAdress_list.indexOf(mConnected_list.get(ConnectedNum - 1));
+                if (device_index != -1) {
+                    final BluetoothDevice device = mListBluetoothDevice.get(device_index);
+                    mDeviceAddress = device.getAddress();
+                    mConnectDeviceName = device.getName();
+
+                    //紀錄連接過的Device並進行排列，越後面時間越新
+                    WriteConnectedDevice();
+
+                    //進行Device連接
+                    ConnectDevice(mDeviceAddress);
+                    break;
+                }
+                ConnectedNum--;
+            }
+        }
+    }
+
+    /**
+     * 進行Device連接
+     * @param DeviceAddress 要連接的Device Address
+     **/
+    private void ConnectDevice (String DeviceAddress) {
+        if (mBluetoothLeService == null) {
+            //  透過 Intent 方式帶出另一個畫面 DeviceControlActivity
+            //  同時把藍芽位址資料也傳過去，創建畫面的同時也建立 BluetoothLeService 類別 (衍生自 service 類別)
+            //  這裡利用一個技巧，讓服務在背景執行，然後將畫面與服務 bind 在一起
+            Intent gattServiceIntent = new Intent(MainActivity.this, BluetoothLeService.class);
+            bindService(gattServiceIntent, ServiceConnection, BIND_AUTO_CREATE);
+
+            //  藍芽服務有任何訊息要通知 UI 畫面，向系統註冊 callback 函式用來處理服務的訊息
+            registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+
+        } else {
+            if (mBluetoothLeService.mBluetoothGatt != null && !DeviceAddress.equals(mBluetoothLeService.mBluetoothDeviceAddress)) {
+                //  如果連接的裝置跟上次不同，則將Gatt釋放掉
+                mBluetoothLeService.mBluetoothGatt.disconnect();
+                mBluetoothLeService.mBluetoothGatt.close();
+                final boolean result = mBluetoothLeService.connect(DeviceAddress);
+                Log.d(BluetoothLeService.TAG, "Connect request result=" + result);
+            } else if (mBluetoothLeService.mBluetoothGatt != null && DeviceAddress.equals(mBluetoothLeService.mBluetoothDeviceAddress)) {
+                //  如果連接的裝置跟上次相同，則重連
+                final boolean result = mBluetoothLeService.connect(DeviceAddress);
+                Log.d(BluetoothLeService.TAG, "Connect request result=" + result);
+            }
         }
     }
     /**↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑Function↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑**/
