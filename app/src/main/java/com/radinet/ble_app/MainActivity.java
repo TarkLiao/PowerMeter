@@ -2,56 +2,44 @@ package com.radinet.ble_app;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.AlarmManager;
 import android.app.AlertDialog;
-import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
-import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
-import android.bluetooth.le.ScanSettings;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.AnimationDrawable;
 import android.location.LocationManager;
 import android.os.Build;
-import android.os.Environment;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.PowerManager;
 import android.os.Vibrator;
 import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.text.Layout;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -64,27 +52,31 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.BufferedOutputStream;
+//import com.google.zxing.BarcodeFormat;
+//import com.google.zxing.EncodeHintType;
+//import com.google.zxing.MultiFormatWriter;
+//import com.google.zxing.WriterException;
+//import com.google.zxing.common.BitMatrix;
+import com.google.zxing.integration.android.*;
+
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-
+//import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+//
+//import java.util.EnumMap;
+//import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -110,6 +102,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton Button_Volt_Min_Add;
     private ImageButton Button_Amp_Max_Sub;
     private ImageButton Button_Amp_Max_Add;
+    private Button Button_Qrcode_Scan;
 
     /**
      * 宣告Button OnClick後的行為
@@ -136,6 +129,11 @@ public class MainActivity extends AppCompatActivity {
     private View View_Value_50A;
     private View View_Setting;
     private Boolean isPage30A;
+
+    /**
+     * 宣告顯示在正連線的裝置
+     **/
+    private TextView Textview_connected;
 
     /**
      * 宣告Checkbox
@@ -189,6 +187,11 @@ public class MainActivity extends AppCompatActivity {
     Boolean mFlag_AlarmEnergy_50A = false;
     Boolean mFlag_AlarmVolt_50A = false;
     Boolean mFlag_AlarmAmp_50A = false;
+
+    /**
+     * 相機
+     */
+    private static final int REQUEST_CAMREA_PERMISSION = 10;
 
     /**
      * Bluetooth BLE
@@ -378,6 +381,26 @@ public class MainActivity extends AppCompatActivity {
                     mTimerScan = new Timer(true);
                     //5.0.2須不斷Scan才能掃到裝置
                     mTimerScan.schedule(new Task_ScanContinued(), 0, 500);
+                }
+            }
+        });
+
+        Button_Qrcode_Scan.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (Build.VERSION.SDK_INT >= 23) {
+                    int location_permission = checkSelfPermission(
+                            Manifest.permission.CAMERA);
+                    if (location_permission != PackageManager.PERMISSION_GRANTED) {
+                        requestPermissions(new String[]{
+                                Manifest.permission.CAMERA}, REQUEST_CAMREA_PERMISSION);
+                    } else {
+                        IntentIntegrator scanIntegrator = new IntentIntegrator(MainActivity.this);
+                        scanIntegrator.initiateScan();
+                    }
+                } else {
+                    IntentIntegrator scanIntegrator = new IntentIntegrator(MainActivity.this);
+                    scanIntegrator.initiateScan();
                 }
             }
         });
@@ -738,6 +761,7 @@ public class MainActivity extends AppCompatActivity {
         Button_Volt_Min_Add = (ImageButton) View_Setting.findViewById(R.id.Button_Volt_Min_Add);
         Button_Amp_Max_Sub = (ImageButton) View_Setting.findViewById(R.id.Button_Amp_Max_Sub);
         Button_Amp_Max_Add = (ImageButton) View_Setting.findViewById(R.id.Button_Amp_Max_Add);
+        Button_Qrcode_Scan = (Button) View_Setting.findViewById(R.id.Button_Add_device);
 
         // check與物件做連結，非activity_main的物件，所以需要該layout的View
         Checkbox_Option_30A = (CheckBox) View_Setting.findViewById(R.id.CheckBox_30a);
@@ -760,11 +784,13 @@ public class MainActivity extends AppCompatActivity {
      **/
     private void LinkObjectValue() {
         if (isPage30A) {
+            Textview_connected = (TextView) View_Value_30A.findViewById(R.id.textview_connected_30A);
             LedText_Value_Energy_30A = (LedTextView) View_Value_30A.findViewById(R.id.Textview_Value_Energy_30a);
             LedText_Value_Watt_30A = (LedTextView) View_Value_30A.findViewById(R.id.Textview_Value_Watt_30a);
             LedText_Value_Volt_30A = (LedTextView) View_Value_30A.findViewById(R.id.Textview_Value_Volt_30a);
             LedText_Value_Amp_30A = (LedTextView) View_Value_30A.findViewById(R.id.Textview_Value_Amp_30a);
         } else {
+            Textview_connected = (TextView) View_Value_30A.findViewById(R.id.textview_connected_50A);
             LedText_Value_Energy_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Energy_30a);
             LedText_Value_Watt_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Watt_30a);
             LedText_Value_Volt_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Volt_30a);
@@ -1219,6 +1245,7 @@ public class MainActivity extends AppCompatActivity {
      **/
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
         //  startActivityForResult未開啟藍牙，則結束APP
         if (requestCode == RQS_ENABLE_BLUETOOTH && resultCode == Activity.RESULT_CANCELED) {
             finish();
@@ -1250,6 +1277,18 @@ public class MainActivity extends AppCompatActivity {
                     //使用者拒絕權限
                     finish();
                 }
+                break;
+            case REQUEST_CAMREA_PERMISSION:
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    //取得權限
+                    IntentIntegrator scanIntegrator = new IntentIntegrator(MainActivity.this);
+                    scanIntegrator.initiateScan();
+                } else {
+                    //使用者拒絕權限
+
+                }
+                break;
         }
         return;
     }
@@ -1427,6 +1466,7 @@ public class MainActivity extends AppCompatActivity {
             action = intent.getAction();
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
                 mConnected = true;
+                Textview_connected.setText(mConnectDeviceName);
                 Layout_Display.removeAllViews();
                 if (isPage30A) {
                     Layout_Display.addView(View_Value_30A);
@@ -1442,6 +1482,7 @@ public class MainActivity extends AppCompatActivity {
                 mToast.show();
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 mConnected = false;
+                Textview_connected.setText("Empty");
                 Log.d("Paul", "Connect Fail");
                 if (mToast == null) {
                     mToast = Toast.makeText(MainActivity.this, mConnectDeviceName + " disconnected", Toast.LENGTH_SHORT);
@@ -1792,5 +1833,69 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+
+    /**
+     * 生成QRcode
+     **/
+//    public void QrCodeCreate(View v)
+//    {
+//        // QR code 的內容
+//        String QRCodeContent = "QR code test";
+//        // QR code 寬度
+//        int QRCodeWidth = 200;
+//        // QR code 高度
+//        int QRCodeHeight = 200;
+//        // QR code 內容編碼
+//        Map<EncodeHintType, Object> hints = new EnumMap<EncodeHintType, Object>(EncodeHintType.class);
+//        hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+//
+//        MultiFormatWriter writer = new MultiFormatWriter();
+//        try
+//        {
+//            // 容錯率姑且可以將它想像成解析度，分為 4 級：L(7%)，M(15%)，Q(25%)，H(30%)
+//            // 設定 QR code 容錯率為 H
+//            hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
+//
+//            // 建立 QR code 的資料矩陣
+//            BitMatrix result = writer.encode(QRCodeContent, BarcodeFormat.QR_CODE, QRCodeWidth, QRCodeHeight, hints);
+//            // ZXing 還可以生成其他形式條碼，如：BarcodeFormat.CODE_39、BarcodeFormat.CODE_93、BarcodeFormat.CODE_128、BarcodeFormat.EAN_8、BarcodeFormat.EAN_13...
+//
+//            //建立點陣圖
+//            Bitmap bitmap = Bitmap.createBitmap(QRCodeWidth, QRCodeHeight, Bitmap.Config.ARGB_8888);
+//            // 將 QR code 資料矩陣繪製到點陣圖上
+//            for (int y = 0; y<QRCodeHeight; y++)
+//            {
+//                for (int x = 0;x<QRCodeWidth; x++)
+//                {
+//                    bitmap.setPixel(x, y, result.get(x, y) ? Color.BLACK : Color.WHITE);
+//                }
+//            }
+//
+//            ImageView imgView = (ImageView) findViewById(R.id.imageView_QRcode);
+//            // 設定為 QR code 影像
+//            imgView.setImageBitmap(bitmap);
+//        }
+//        catch (WriterException e)
+//        {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
+//
+//    }
+
+    /**
+     * 掃描QRcode
+     */
+//    public void onActivityResult(int requestCode, int resultCode, Intent intent){
+//        IntentResult scanningResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
+//        if(scanningResult!=null){
+//            String scanContent=scanningResult.getContents();
+//            String scanFormat=scanningResult.getFormatName();
+//            scan_content.setText(scanContent);
+//            scan_format.setText(scanFormat);
+//        }else{
+//            Toast.makeText(getApplicationContext(),"nothing",Toast.LENGTH_SHORT).show();
+//        }
+//    }
     /**↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑Function↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑**/
 }

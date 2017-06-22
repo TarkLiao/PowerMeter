@@ -19,6 +19,56 @@
             android:textColor="@color/Color_Blue"
             android:textSize="25sp"
             android:textStyle="bold" />
+        <TextView
+            android:id="@+id/padding22"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:gravity="left">
+            <TextView
+                android:id="@+id/padding23"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="3" />
+            <TextView
+                android:id="@+id/tv_connected"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:gravity="center"
+                android:text="Connect"
+                android:textColor="@color/Color_Green"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/padding25"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+            <TextView
+                android:id="@+id/textview_connected_30A"
+                android:layout_width="140dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="10"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:gravity="left"
+                android:text="Empty"
+                android:textColor="@color/Color_Green"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/padding24"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/padding17"
@@ -36,18 +86,18 @@
                 android:id="@+id/padding1"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_weight="4" />
+                android:layout_weight="3" />
             <TextView
                 android:id="@+id/tv_energy_30a"
-                android:layout_width="90dp"
+                android:layout_width="95dp"
                 android:layout_height="wrap_content"
                 android:background="@drawable/shape"
                 android:gravity="center"
-                android:paddingTop="1dp"
-                android:paddingBottom="1dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
                 android:text="@string/Title_Energy"
                 android:textColor="@color/Color_White"
-                android:textSize="25sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
             <TextView
                 android:id="@+id/padding2"
@@ -57,7 +107,7 @@
 
             <com.radinet.ble_app.LedTextView
                 android:id="@+id/Textview_Value_Energy_30a"
-                android:layout_width="130dp"
+                android:layout_width="120dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:ellipsize="end"
@@ -73,7 +123,7 @@
                 android:layout_weight="1" />
             <TextView
                 android:id="@+id/tv_energy_unit_30a"
-                android:layout_width="50dp"
+                android:layout_width="60dp"
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="@string/Unit_Energy"
@@ -84,7 +134,7 @@
                 android:id="@+id/padding4"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_weight="4" />
+                android:layout_weight="3" />
         </LinearLayout>
 
         <TextView
@@ -103,19 +153,19 @@
                 android:id="@+id/padding5"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_weight="4" />
+                android:layout_weight="3" />
 
             <TextView
                 android:id="@+id/tv_watt_30a"
-                android:layout_width="90dp"
+                android:layout_width="95dp"
                 android:layout_height="wrap_content"
                 android:background="@drawable/shape"
                 android:gravity="center"
-                android:paddingTop="1dp"
-                android:paddingBottom="1dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
                 android:text="@string/Title_Watt"
                 android:textColor="@color/Color_White"
-                android:textSize="25sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -126,7 +176,7 @@
 
             <com.radinet.ble_app.LedTextView
                 android:id="@+id/Textview_Value_Watt_30a"
-                android:layout_width="130dp"
+                android:layout_width="120dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:ellipsize="end"
@@ -144,7 +194,7 @@
 
             <TextView
                 android:id="@+id/tv_watt_unit_30a"
-                android:layout_width="50dp"
+                android:layout_width="60dp"
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="@string/Unit_Watt"
@@ -156,7 +206,7 @@
                 android:id="@+id/padding8"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_weight="4" />
+                android:layout_weight="3" />
 
         </LinearLayout>
 
@@ -177,19 +227,19 @@
                 android:id="@+id/padding9"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_weight="4" />
+                android:layout_weight="3" />
 
             <TextView
                 android:id="@+id/tv_volt_30a"
-                android:layout_width="90dp"
+                android:layout_width="95dp"
                 android:layout_height="wrap_content"
                 android:background="@drawable/shape"
                 android:gravity="center"
-                android:paddingTop="1dp"
-                android:paddingBottom="1dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
                 android:text="@string/Title_Volt"
                 android:textColor="@color/Color_White"
-                android:textSize="25sp"
+                android:textSize="20sp"
                 android:textStyle="bold"/>
             <TextView
                 android:id="@+id/padding10"
@@ -199,7 +249,7 @@
 
             <com.radinet.ble_app.LedTextView
                 android:id="@+id/Textview_Value_Volt_30a"
-                android:layout_width="130dp"
+                android:layout_width="120dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:ellipsize="end"
@@ -217,7 +267,7 @@
 
             <TextView
                 android:id="@+id/tv_volt_unit_30a"
-                android:layout_width="50dp"
+                android:layout_width="60dp"
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="@string/Unit_Volt"
@@ -228,7 +278,7 @@
                 android:id="@+id/padding12"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_weight="4" />
+                android:layout_weight="3" />
 
         </LinearLayout>
 
@@ -248,18 +298,19 @@
                 android:id="@+id/padding13"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_weight="4" />
+                android:layout_weight="3" />
 
             <TextView
                 android:id="@+id/tv_amp_30a"
-                android:layout_width="90dp"
+                android:layout_width="95dp"
                 android:layout_height="wrap_content"
                 android:background="@drawable/shape"
                 android:gravity="center"
-                android:padding="1dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
                 android:text="@string/Title_Amp"
                 android:textColor="@color/Color_White"
-                android:textSize="25sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -270,7 +321,7 @@
 
             <com.radinet.ble_app.LedTextView
                 android:id="@+id/Textview_Value_Amp_30a"
-                android:layout_width="130dp"
+                android:layout_width="120dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:ellipsize="end"
@@ -288,7 +339,7 @@
 
             <TextView
                 android:id="@+id/tv_amp_unit_30a"
-                android:layout_width="50dp"
+                android:layout_width="60dp"
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="@string/Unit_Amp"
@@ -300,7 +351,7 @@
                 android:id="@+id/padding16"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_weight="4" />
+                android:layout_weight="3" />
         </LinearLayout>
 
         <TextView
