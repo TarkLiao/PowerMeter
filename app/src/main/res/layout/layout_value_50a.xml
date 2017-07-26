@@ -1,25 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="center_horizontal">
-
-        <TextView
-            android:id="@+id/tv_watchdog_50a"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true"
-            android:gravity="center"
-            android:text="Power Watchdog\n50A Service"
-            android:textColor="@color/Color_Blue"
-            android:textSize="25sp"
-            android:textStyle="bold" />
+            android:gravity="center">
+            <TextView
+                android:id="@+id/padding30"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="2" />
+            <TextView
+                android:id="@+id/tv_watchdog_50a"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:gravity="center"
+                android:text="Power Watchdog\n50A Service"
+                android:textColor="@color/Color_Blue"
+                android:textSize="25sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/padding28"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <ImageButton
+                android:id="@+id/Button_Reset_50A"
+                android:layout_width="100dp"
+                android:layout_height="40dp"
+                app:srcCompat="@drawable/reset"
+                android:scaleType="fitXY"
+                android:background="@null"
+                />
+            <TextView
+                android:id="@+id/padding29"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="2" />
+        </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="30dp"

@@ -59,8 +59,8 @@ public class BluetoothLeService extends Service {
  rx_char_UUID    = CBUUID(string:"FFE2") //FFE0:FFE2
  key_char_UUID   = CBUUID(string:"FFE1") //FFE0:FFE1
  * **/
-    private BluetoothGattCharacteristic mReadCharacteristric = null;
-    private BluetoothGattCharacteristic mWriteCharacteristric = null;
+    public static BluetoothGattCharacteristic mReadCharacteristric = null;
+    public static BluetoothGattCharacteristic mWriteCharacteristric = null;
     public static final UUID TRANSFER_SERVICE_READ = UUID.fromString("0000FFE0-0000-1000-8000-00805F9B34FB");
     public static final UUID TRANSFER_CHARACTERISTIC_READ = UUID.fromString("0000FFE2-0000-1000-8000-00805F9B34FB");
     public static final UUID TRANSFER_SERVICE_WRITE = UUID.fromString("0000FFF0-0000-1000-8000-00805F9B34FB");
@@ -108,13 +108,27 @@ public class BluetoothLeService extends Service {
                         mBluetoothGatt.discoverServices());
 
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                //close();
                 intentAction = ACTION_GATT_DISCONNECTED;
                 mConnectionState = STATE_DISCONNECTED;
                 Log.i(TAG, "Disconnected from GATT server.");
                 broadcastUpdate(intentAction);
             }
+            if (status == 133) {
+                close();
+            }
         }
-
+        public void close() {
+            if (mBluetoothGatt == null) {
+                return;
+            }
+            Log.w(TAG, "mBluetoothGatt closed");
+            //mBluetoothDeviceAddress = null;
+            mBluetoothGatt.disconnect();
+            mBluetoothGatt.close();
+            mBluetoothGatt = null;
+            connect(mBluetoothDeviceAddress);
+        }
         /**藉UUID取得Service**/
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
@@ -126,6 +140,7 @@ public class BluetoothLeService extends Service {
                     mReadCharacteristric = btGattReadService.getCharacteristic(TRANSFER_CHARACTERISTIC_READ);
                     if (mReadCharacteristric != null) {
                         mBluetoothGatt.setCharacteristicNotification(mReadCharacteristric, true);
+                        mBluetoothGatt.readCharacteristic(mReadCharacteristric);
                     }
                 }
                 BluetoothGattService btGattWriteService = mBluetoothGatt.getService(TRANSFER_SERVICE_WRITE);
@@ -144,7 +159,9 @@ public class BluetoothLeService extends Service {
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic characteristic,
                                          int status) {
+            Log.d("test", "Tark Read");
             if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.d("test", "Tark Read");
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             }
         }
@@ -154,12 +171,14 @@ public class BluetoothLeService extends Service {
                                          BluetoothGattCharacteristic characteristic,
                                          int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.d("test", "Tark write"+status);
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             }
         }
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
+//            Log.d("test", "Tark change");
             broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
         }
     };
@@ -190,6 +209,7 @@ public class BluetoothLeService extends Service {
         // We want to directly connect to the device, so we are setting the autoConnect
         // parameter to false.
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
+
         Log.d(TAG, "Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
         mConnectionState = STATE_CONNECTING;
@@ -207,6 +227,17 @@ public class BluetoothLeService extends Service {
                                  final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
         final byte[] data = characteristic.getValue();
+//                Log.d("Get", "success");
+//        StringBuffer buffer = new StringBuffer("0x");
+//        int i;
+//        int c1 = 0;
+//        //Log.d("test", "1:");
+//        for (byte b : data) {
+//            i = b & 0xff;
+//            //buffer.append(Integer.toHexString(i));
+//            Log.d("test", "read data:"+ String.valueOf(c1)+":" + Integer.toHexString(i));
+//            c1++;
+//        }
         intent.putExtra(ACTION_DATA_AVAILABLE, data);
         sendBroadcast(intent);
     }

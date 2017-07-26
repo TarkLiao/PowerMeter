@@ -1,6 +1,8 @@
 package com.radinet.ble_app;
 
 import android.Manifest;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Notification;
@@ -20,12 +22,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.AnimationDrawable;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -35,15 +37,17 @@ import android.os.PowerManager;
 import android.os.Vibrator;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.animation.LinearInterpolator;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.CheckBox;
+import android.widget.CheckedTextView;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -52,12 +56,8 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-//import com.google.zxing.BarcodeFormat;
-//import com.google.zxing.EncodeHintType;
-//import com.google.zxing.MultiFormatWriter;
-//import com.google.zxing.WriterException;
-//import com.google.zxing.common.BitMatrix;
-import com.google.zxing.integration.android.*;
+import com.yanzhenjie.zbar.camera.CameraPreview;
+import com.yanzhenjie.zbar.camera.QrCodeCallback;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -73,10 +73,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-//import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
-//
-//import java.util.EnumMap;
-//import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -102,7 +98,18 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton Button_Volt_Min_Add;
     private ImageButton Button_Amp_Max_Sub;
     private ImageButton Button_Amp_Max_Add;
-    private Button Button_Qrcode_Scan;
+    private ImageButton Button_Setting_Add;
+    private ImageButton Button_Setting_Set;
+    private ImageButton Button_Setting_Delete;
+    private ImageButton Button_Delete;
+    private ImageButton Button_Reset;
+    private ImageButton Button_Apply;
+    private ImageButton Button_App_Update;
+
+    /**
+     * 判定Reset後Device沒反應時的處理
+     */
+    private Handler mResetHandler;
 
     /**
      * 宣告Button OnClick後的行為
@@ -111,12 +118,22 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * 宣告ImageView，作為Scan的轉圈圈動畫
-     */
+     **/
     private ImageView Imageview_scan;
     private AnimationDrawable AnimationDrawable;
 
     /**
-     * 宣告Display用的主Page
+     * 宣告整個layout的主Page
+     **/
+    private RelativeLayout Layout_Main;
+
+    /**
+     * 宣告App本身介面
+     **/
+    private RelativeLayout layout_App;
+
+    /**
+     * 宣告標籤頁顯示的內容
      **/
     private RelativeLayout Layout_Display;
 
@@ -128,23 +145,22 @@ public class MainActivity extends AppCompatActivity {
     private View View_Value_30A;
     private View View_Value_50A;
     private View View_Setting;
-    private Boolean isPage30A;
+    private View View_SettingDelete;
+    private View View_SettingSet;
+    private View View_SettingMenu;
+    private View View_Qrcode;
+
+    /**
+     * BLE一次傳20byte，共40byte，所以前20byte會先取得Value，後20byte判斷channel0或1，所以先將Value做儲存
+     **/
+    private byte[] mData;
+    private boolean mChannel0 = false;
+    private boolean mChannel1 = false;
 
     /**
      * 宣告顯示在正連線的裝置
      **/
     private TextView Textview_connected;
-
-    /**
-     * 宣告Checkbox
-     **/
-    private CheckBox Checkbox_Option_30A;
-    private CheckBox Checkbox_Option_50A;
-
-    /**
-     * 宣告CheckBox OnClick後的行為
-     **/
-    private CheckBoxChangeListener CheckBoxChangeListen;
 
     /**
      * 宣告暫存layout_setting limit的變數
@@ -192,17 +208,58 @@ public class MainActivity extends AppCompatActivity {
      * 相機
      */
     private static final int REQUEST_CAMREA_PERMISSION = 10;
+    private RelativeLayout mScanCropView;
+    private ImageView mScanLine;
+    private ValueAnimator mScanAnimator;
+    private CameraPreview mPreviewView;
+
+    /**
+     *   宣告QRcode顯示物件
+     *   Mac顯示裝置識別,Device Name儲存用戶輸入的名稱,Type裝置屬於30A/50A
+     * */
+    private TextView TextView_Mac;
+    private EditText EditText_Device_Name;
+    private TextView TextView_Setting_Type;
+
+    /**
+     * Device Type S:單相 D:雙相
+     */
+    String mDeviceType = "S";
+
+    /**
+     * Mac:儲存裝置識別
+     * Name:儲存裝置顯示名稱
+     * Type:儲存裝置為30/50A
+     * Delete:Delete列表的checkbox是否點擊
+     */
+    List<String> mList_ScanDeviceMac;
+    List<String> mList_ScanDeviceName;
+    List<String> mList_ScanDeviceType;
+    List<Boolean> mlist_DeleteCheckbox;
+
+    /**
+     * Setting Set列表(List)
+     * Setting Delete列表(checkboxList)
+     */
+    ListView ListView_Set;
+    ArrayAdapter<String> mAdapterSettingSetResult;
+    ListView ListView_SettingDelete;
+    ListAdapter mAdapterSettingDeleteResult;
 
     /**
      * Bluetooth BLE
      **/
     private static final int RQS_ENABLE_BLUETOOTH = 1;
     private static final int REQUEST_FINE_LOCATION_PERMISSION = 102;
+
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothLeScanner mBluetoothLeScanner;
     private static final long SCAN_PERIOD = 5000;
     private boolean mScanning;
     private boolean mConnected = false;
+    private boolean mReseting = false;
+
+
 
     //  搜尋到的BluetoothDevice
     List<BluetoothDevice> mListBluetoothDevice;
@@ -219,13 +276,16 @@ public class MainActivity extends AppCompatActivity {
     //Scan到的Device數量
     private int mScanDeviceNum;
 
+    ListView ListView_BLE;
     ArrayAdapter<String> mAdapterLeScanResult;
 
-    ListView ListView_BLE;
     private Handler mHandler;
     private BluetoothLeService mBluetoothLeService;
     private String mConnectDeviceName;
+    private String mCurrentConnect;
     private String mDeviceAddress;
+    private String mDeviceMac;
+    private BluetoothDevice mBluetoothDevice;
 
     /**
      * 宣告從藍牙讀取到的數據變數
@@ -268,6 +328,13 @@ public class MainActivity extends AppCompatActivity {
         String Volt_Min = "0";
         String Amp_Max = "30";
     }
+    double Value_Watt_30A = 0;
+    double Value_Watt_50A = 0;
+    double Value_Energy_30A = 0;
+    double Value_Energy_50A = 0;
+
+
+    private static Boolean isPage30A;
 
 
     @Override
@@ -284,11 +351,17 @@ public class MainActivity extends AppCompatActivity {
         /**將宣告與Common物件做連結**/
         LinkObjectCommon();
 
-        /**將Value的textview與物件做連結**/
+        /**將宣告與物件做連結，監聽Button_Reset的作用**/
         LinkObjectValue();
+
+        /**QrCode掃描的物件宣告與連結，設定中間框的大小**/
+        QrcodeInit();
 
         /**確認setting檔案是否存在，存在的話直接讀取值，不存在的話create檔案並給予Default**/
         CheckSettingFileAndCheckData();
+
+        /**確認允許scan的Device，檔案存在則讀取，不存在則無**/
+        CheckScanDevice();
 
         /**確認connect過的Device，存在讀取DeviceName，不存在則無**/
         CheckConnectedData();
@@ -312,16 +385,6 @@ public class MainActivity extends AppCompatActivity {
         Button_Amp_Max_Sub.setOnTouchListener(ButtonLongPressListen);
         Button_Amp_Max_Add.setOnTouchListener(ButtonLongPressListen);
 
-        /**監聽各CheckBox被按下**/
-        CheckBoxChangeListen = new CheckBoxChangeListener();
-        if (isPage30A) {
-            Checkbox_Option_30A.setChecked(true);
-        } else {
-            Checkbox_Option_50A.setChecked(true);
-        }
-        Checkbox_Option_30A.setOnClickListener(CheckBoxChangeListen);
-        Checkbox_Option_50A.setOnClickListener(CheckBoxChangeListen);
-
         /**Bluetooth BLE**/
         /**檢查裝置是否支援BLE，沒有就直接關閉APP**/
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
@@ -344,25 +407,36 @@ public class MainActivity extends AppCompatActivity {
         mDeviceAdress_list = new ArrayList<>();
         mHandler = new Handler();
 
-        /**用Adapter設定ListView需要顯示的內容及模式**/
-        //  simple_list_item_1 只顯示一行文字
-        //  mDevice_list    文字顯示的內容
-        mAdapterLeScanResult = new ArrayAdapter<>(this,
-                android.R.layout.simple_list_item_activated_1, mDevice_list);
 
-        /**將Adapter設定至ListView**/
+
+        /**用Adapter設定ListView_BLE需要顯示的內容及模式，根據layout_listitem.xml**/
+        //  android.R.layout.simple_list_item_activated_1 只顯示一行文字
+        //  mDevice_list    文字顯示的內容
+        mAdapterLeScanResult = new ArrayAdapter<>(this, R.layout.layout_listitem, mDevice_list);
+        //將Adapter設定至ListView
         ListView_BLE.setAdapter(mAdapterLeScanResult);
+        //監聽ListView_BLE的項目
+        ListView_BLE.setOnItemClickListener(scanResultOnItemClickListener);
+
+        /**用Adapter設定ListView_Set需要顯示的內容及模式，根據layout_listitem.xml**/
+        mAdapterSettingSetResult= new ArrayAdapter<>(this, R.layout.layout_listitem, mList_ScanDeviceName);
+        ListView_Set.setAdapter(mAdapterSettingSetResult);
+        ListView_Set.setOnItemClickListener(SettingSetResultOnItemClickListener);
 
         /**監聽ListView的項目**/
-        ListView_BLE.setOnItemClickListener(scanResultOnItemClickListener);
+        mlist_DeleteCheckbox = new ArrayList<>();
+        ListView_SettingDelete.setOnItemClickListener(SettingDeleteResultOnItemClickListener);
+        /**用ListAdapter設定ListView_SettingDelete需要顯示的內容及模式**/
+        mAdapterSettingDeleteResult = new ListAdapter(this, mList_ScanDeviceName);
+        ListView_SettingDelete.setAdapter(mAdapterSettingDeleteResult);
 
         /**監聽Button_Scan，點擊後開始scan device**/
         Button_Scan.setOnClickListener(new View.OnClickListener() {
+            int i;
             @Override
             public void onClick(View v) {
                 Layout_Display.removeAllViews();
                 Layout_Display.addView(View_Scan);
-
                 /**進行scan device**/
                 if (Build.VERSION.SDK_INT >= 23) {
                     scanLeDevice(mBluetoothAdapter.isEnabled());
@@ -385,25 +459,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Button_Qrcode_Scan.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (Build.VERSION.SDK_INT >= 23) {
-                    int location_permission = checkSelfPermission(
-                            Manifest.permission.CAMERA);
-                    if (location_permission != PackageManager.PERMISSION_GRANTED) {
-                        requestPermissions(new String[]{
-                                Manifest.permission.CAMERA}, REQUEST_CAMREA_PERMISSION);
-                    } else {
-                        IntentIntegrator scanIntegrator = new IntentIntegrator(MainActivity.this);
-                        scanIntegrator.initiateScan();
-                    }
-                } else {
-                    IntentIntegrator scanIntegrator = new IntentIntegrator(MainActivity.this);
-                    scanIntegrator.initiateScan();
-                }
-            }
-        });
+        /**監聽Setting Page "Add" "Set" "Delete" Button的作用**/
+        ScanDeviceMenu();
+
     }
 
     /**↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓物件行為↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓**/
@@ -414,11 +472,6 @@ public class MainActivity extends AppCompatActivity {
         //  按Scan Value Setting Button後，切換Page
         public void onClick(View v) {
             switch (v.getId()) {
-                case R.id.Button_Scan:
-                    //  先清除所有View
-                    Layout_Display.removeAllViews();
-                    Layout_Display.addView(View_Scan);
-                    break;
                 case R.id.Button_Value:
                     //  先清除所有View
                     Layout_Display.removeAllViews();
@@ -431,9 +484,8 @@ public class MainActivity extends AppCompatActivity {
                 case R.id.Button_Setting:
                     //  先清除所有View
                     Layout_Display.removeAllViews();
-                    Layout_Display.addView(View_Setting);
+                    Layout_Display.addView(View_SettingMenu);
                     break;
-
             }
         }
     }
@@ -592,45 +644,26 @@ public class MainActivity extends AppCompatActivity {
     };
 
     /**
-     * 建立CheckBox按下後的行為
+     * 切換Setting頁面的LimitValue成30A的設定
      **/
-    public class CheckBoxChangeListener implements View.OnClickListener {
-        public void onClick(View v) {
-            //  當checkbox切換時，將textview的Value存進setting，並將另一個setting的value set進textview
-            switch (((CheckBox) v).getId()) {
-                case R.id.CheckBox_30a:
-                    isPage30A = true;
-                    Checkbox_Option_30A.setChecked(true);
-                    Limit_Value_50A.Energy_Max = LedText_Limit_Energy_Max.getText().toString();
-                    Limit_Value_50A.Volt_Max = LedText_Limit_Volt_Max.getText().toString();
-                    Limit_Value_50A.Volt_Min = LedText_Limit_Volt_Min.getText().toString();
-                    Limit_Value_50A.Amp_Max = LedText_Limit_Amp_Max.getText().toString();
-                    Checkbox_Option_50A.setChecked(false);
-                    LedText_Limit_Energy_Max.setText(Limit_Value_30A.Energy_Max);
-                    LedText_Limit_Volt_Max.setText(Limit_Value_30A.Volt_Max);
-                    LedText_Limit_Volt_Min.setText(Limit_Value_30A.Volt_Min);
-                    LedText_Limit_Amp_Max.setText(Limit_Value_30A.Amp_Max);
-                    break;
-                case R.id.CheckBox_50a:
-                    isPage30A = false;
-                    Checkbox_Option_30A.setChecked(false);
-                    Limit_Value_30A.Energy_Max = LedText_Limit_Energy_Max.getText().toString();
-                    Limit_Value_30A.Volt_Max = LedText_Limit_Volt_Max.getText().toString();
-                    Limit_Value_30A.Volt_Min = LedText_Limit_Volt_Min.getText().toString();
-                    Limit_Value_30A.Amp_Max = LedText_Limit_Amp_Max.getText().toString();
-                    Checkbox_Option_50A.setChecked(true);
-                    LedText_Limit_Energy_Max.setText(Limit_Value_50A.Energy_Max);
-                    LedText_Limit_Volt_Max.setText(Limit_Value_50A.Volt_Max);
-                    LedText_Limit_Volt_Min.setText(Limit_Value_50A.Volt_Min);
-                    LedText_Limit_Amp_Max.setText(Limit_Value_50A.Amp_Max);
-                    break;
-            }
-            LinkObjectValue();
-        }
+    public void GetSetting30A() {
+        LedText_Limit_Energy_Max.setText(Limit_Value_30A.Energy_Max);
+        LedText_Limit_Volt_Max.setText(Limit_Value_30A.Volt_Max);
+        LedText_Limit_Volt_Min.setText(Limit_Value_30A.Volt_Min);
+        LedText_Limit_Amp_Max.setText(Limit_Value_30A.Amp_Max);
+    }
+    /**
+     * 切換Setting頁面的LimitValue成50A的設定
+     **/
+    public void GetSetting50A() {
+        LedText_Limit_Energy_Max.setText(Limit_Value_50A.Energy_Max);
+        LedText_Limit_Volt_Max.setText(Limit_Value_50A.Volt_Max);
+        LedText_Limit_Volt_Min.setText(Limit_Value_50A.Volt_Min);
+        LedText_Limit_Amp_Max.setText(Limit_Value_50A.Amp_Max);
     }
 
     /**
-     * 建立ListView的項目按下後的行為
+     * 建立ScanList的項目按下後的行為
      **/
     AdapterView.OnItemClickListener scanResultOnItemClickListener = new AdapterView.OnItemClickListener() {
         int device_index;
@@ -644,11 +677,12 @@ public class MainActivity extends AppCompatActivity {
             final BluetoothDevice device = mListBluetoothDevice.get(device_index);
 
             mDeviceAddress = device.getAddress();
-            String msg = mDeviceAddress + "\n"
+            String msg = YuWaMac(device.getName()) + "\n"
+                    + mDeviceAddress + "\n"
                     + device.getBluetoothClass().toString() + "\n";
 
             new AlertDialog.Builder(MainActivity.this)
-                    .setTitle(device.getName())
+                    .setTitle(mDevice_list.get(device_index))
                     .setMessage(msg)
                     .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
                         @Override
@@ -657,7 +691,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                     })
                     .setNeutralButton("CONNECT", new DialogInterface.OnClickListener() {
-
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             //  進行Connect後，停止Scan
@@ -673,10 +706,38 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
 
-                            //  紀錄連接的DeviceName
-                            mConnectDeviceName = device.getName();
+                            //  如果連線狀態且連接與選擇的是相同Device，則直接跳到value page，且顯示裝置已連線
+                            if (mConnected && device.equals(mBluetoothDevice)) {
+                                Layout_Display.removeAllViews();
+                                if (isPage30A) {
+                                    Layout_Display.addView(View_Value_30A);
+                                } else {
+                                    Layout_Display.addView(View_Value_50A);
+                                }
+                                if (mToast == null) {
+                                    mToast = Toast.makeText(MainActivity.this, mConnectDeviceName + " connected", Toast.LENGTH_SHORT);
+                                } else {
+                                    mToast.setText(mConnectDeviceName + " connected");
+                                }
+                                mToast.show();
+                                return;
+                            }
 
-                            // 紀錄連接過的Device並進行排列，越後面時間越新
+                            //  判斷連接的是30/50A的device
+                            int index = mList_ScanDeviceMac.indexOf(device.getName());
+                            if (mList_ScanDeviceType.get(3).equals("S")) {
+                                isPage30A = true;
+                            } else if (mList_ScanDeviceType.get(index).equals("D")) {
+                                isPage30A = false;
+                            }
+                            LinkObjectValue();
+
+                            //  紀錄連接的DeviceName
+                            mConnectDeviceName = mList_ScanDeviceName.get(index);
+                            mDeviceMac = mList_ScanDeviceMac.get(index);
+                            mBluetoothDevice = device;
+
+                            //  紀錄連接過的Device並進行排列，越後面時間越新
                             WriteConnectedDevice ();
 
                             //  進行Device連接
@@ -688,25 +749,436 @@ public class MainActivity extends AppCompatActivity {
     };
 
     /**
-     * 按返回鍵時，等同按HOME
+     * 建立SettingSet的項目按下後的行為
+     **/
+    AdapterView.OnItemClickListener SettingSetResultOnItemClickListener = new AdapterView.OnItemClickListener() {
+        int index;
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            final String device_name = (String) parent.getItemAtPosition(position);
+            index = mList_ScanDeviceName.indexOf(device_name);
+
+            //將該項目的裝置識別及修改名稱填到setting頁面
+            TextView_Mac.setText(YuWaMac(mList_ScanDeviceMac.get(index).toString()));
+            EditText_Device_Name.setText(mList_ScanDeviceName.get(index).toString());
+
+            if (mList_ScanDeviceType.get(index).equals("S")) {
+                GetSetting30A();
+                TextView_Setting_Type.setText("S");
+            } else if (mList_ScanDeviceType.get(index).equals("D")) {
+                GetSetting50A();
+                TextView_Setting_Type.setText("D");
+            }
+            LinkObjectValue();
+
+            //因為是settingSet，不一定要修改名稱，所以不focus EditText_Device_Name
+            EditText_Device_Name.clearFocus();
+            Layout_Display.removeAllViews();
+            Layout_Display.addView(View_Setting);
+        }
+    };
+
+    /**
+     * 建立SettingDelete的項目按下後的行為
+     **/
+    AdapterView.OnItemClickListener SettingDeleteResultOnItemClickListener = new AdapterView.OnItemClickListener() {
+        CheckedTextView chkItem;
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            //項目的checkbox點擊效果，儲存各項目的checkbox狀態
+            chkItem = (CheckedTextView) view.findViewById(R.id.check_delete_device);
+            chkItem.setChecked(!chkItem.isChecked());
+            mlist_DeleteCheckbox.set(position, chkItem.isChecked());
+        }
+    };
+    /**
+     * 非Qrcode掃瞄時按返回鍵時，等同按HOME
+     * Qrcode掃描時，按返回鍵，返回SettingMenu
      **/
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            // Show home screen when pressing "back" button,
-            //  so that this app won't be closed accidentally
-            Intent intentHome = new Intent(Intent.ACTION_MAIN);
-            intentHome.addCategory(Intent.CATEGORY_HOME);
-            intentHome.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intentHome);
+            if (mScanAnimator != null) {
+                if (mScanAnimator.isRunning()) {
+                    Layout_Main.removeAllViews();
+                    Layout_Main.addView(layout_App);
+                    QrcodeStopScan();
+                    return super.onKeyDown(0, null);
+                }
+            } else {
+                // Show home screen when pressing "back" button,
+                //  so that this app won't be closed accidentally
+                Intent intentHome = new Intent(Intent.ACTION_MAIN);
+                intentHome.addCategory(Intent.CATEGORY_HOME);
+                intentHome.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intentHome);
 
-            return true;
+                return true;
+            }
         }
-
         return super.onKeyDown(keyCode, event);
     }
+    /**
+     * 監聽Setting Page "Add" "Set" "Delete" Button的作用
+     * 監聽Apply及Delete Button的作用
+     **/
+    public void ScanDeviceMenu() {
+        //將Delete的checkboxlist全設為false
+        for (int i = 0; i < mList_ScanDeviceMac.size(); i++) {
+            mlist_DeleteCheckbox.add(false);
+        }
+
+        Button_Setting_Add.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //當擁有相機權限，進行Qrcode掃描，無權限則要求使用者允許
+                if (Build.VERSION.SDK_INT >= 23) {
+                    int location_permission = checkSelfPermission(
+                            Manifest.permission.CAMERA);
+                    if (location_permission != PackageManager.PERMISSION_GRANTED) {
+                        requestPermissions(new String[]{
+                                Manifest.permission.CAMERA}, REQUEST_CAMREA_PERMISSION);
+                    } else {
+                        startScanQrCode();
+                    }
+                } else {
+                    startScanQrCode();
+                }
+            }
+        });
+
+        Button_Apply.setOnClickListener(new View.OnClickListener() {
+            int index;
+            @Override
+            public void onClick(View v) {
+                EditText_Device_Name.clearFocus();
+                if (!EditText_Device_Name.getText().toString().isEmpty()) {
+                    if (!mList_ScanDeviceMac.contains(NightbunMac(TextView_Mac.getText().toString()))) {
+                        Log.d("test","Mac not exist");
+                        mlist_DeleteCheckbox.add(false);
+                        mList_ScanDeviceMac.add(NightbunMac(TextView_Mac.getText().toString()));
+                        mList_ScanDeviceName.add(EditText_Device_Name.getText().toString());
+                        mList_ScanDeviceType.add(mDeviceType);
+                    } else {
+                        Log.d("test","Mac exist");
+                        index = mList_ScanDeviceMac.indexOf(NightbunMac(TextView_Mac.getText().toString()));
+                        mList_ScanDeviceName.set(index, EditText_Device_Name.getText().toString());
+                        mlist_DeleteCheckbox.set(index, false);
+                    }
+
+                    //儲存被允許Scan的Device相關訊息
+                    WriteScanDevice();
+
+                    //如果該設備被connect，則修改connectDevice名稱
+                    if (NightbunMac(TextView_Mac.getText().toString()).equals(mDeviceMac)) {
+                        mConnectDeviceName = mList_ScanDeviceName.get(mList_ScanDeviceMac.indexOf(NightbunMac(TextView_Mac.getText().toString())));
+                        mCurrentConnect = mConnectDeviceName;
+                    }
+                    Layout_Display.removeAllViews();
+                    Layout_Display.addView(View_SettingSet);
+                    ListView_Set.invalidateViews();
+                } else if (EditText_Device_Name.getText().toString().isEmpty()) {
+                    EditText_Device_Name.requestFocus();
+                }
+            }
+        });
+
+        Button_Setting_Set.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Layout_Display.removeAllViews();
+                Layout_Display.addView(View_SettingSet);
+                ListView_Set.invalidateViews();
+            }
+        });
+
+        Button_Setting_Delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Layout_Display.removeAllViews();
+                Layout_Display.addView(View_SettingDelete);
+                ListView_SettingDelete.invalidateViews();
+            }
+        });
+
+        Button_Delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                for (int i = 0; i < mlist_DeleteCheckbox.size(); i++) {
+//                    Log.d("test", mList_ScanDeviceName.get(i) + ":" + mlist_DeleteCheckbox.get(i));
+//                }
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Delete")
+                        .setMessage("Delete Scan Device")
+                        .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        })
+                        .setNeutralButton("Delete", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                for (int i = mlist_DeleteCheckbox.size() - 1; i >= 0; i--) {
+                                    if (mlist_DeleteCheckbox.get(i) == true) {
+                                        mList_ScanDeviceName.remove(i);
+                                        mList_ScanDeviceMac.remove(i);
+                                        mList_ScanDeviceType.remove(i);
+                                        Layout_Display.removeAllViews();
+                                        Layout_Display.addView(View_SettingDelete);
+                                        ListView_SettingDelete.invalidateViews();
+                                    }
+                                }
+                                mlist_DeleteCheckbox.clear();
+                                for (int i = 0; i < mList_ScanDeviceMac.size(); i++) {
+                                    mlist_DeleteCheckbox.add(false);
+                                }
+                                WriteScanDevice();
+                            }
+                        })
+                        .show();
+            }
+        });
+        Button_App_Update.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("App Update")
+                        .setMessage("Go to GooglePlay")
+                        .setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        })
+                        .setNeutralButton("Go", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            final String appPackageName = "com.radinet.ble_app"; // getPackageName() from Context or Activity object
+                            try {
+                                startActivity(new Intent(Intent.ACTION_VIEW,
+                                        Uri.parse("https://play.google.com/store")));
+//                                startActivity(new Intent(Intent.ACTION_VIEW,
+//                                        Uri.parse("market://details?id=" + appPackageName)));
+                            } catch (android.content.ActivityNotFoundException e) {
+                                startActivity(new Intent(Intent.ACTION_VIEW,
+                                        Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)));
+                            }
+                            }
+                        })
+                        .show();
+
+            }
+        });
+    }
     /**↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑物件行為↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑**/
+
+//    @Override
+//    protected void onPause() {
+//        QrcodeStopScan();
+//        super.onPause();
+//    }
+    /**
+     * QrCode掃描的物件宣告與連結，設定中間框的大小
+     **/
+    private void QrcodeInit() {
+        LinearLayout Capture_Layout = (LinearLayout)View_Qrcode.findViewById(R.id.capture_layout);
+        mPreviewView = (CameraPreview) View_Qrcode.findViewById(R.id.capture_preview);
+        mScanCropView = (RelativeLayout) View_Qrcode.findViewById(R.id.capture_crop_view);
+        mScanLine = (ImageView) View_Qrcode.findViewById(R.id.capture_scan_line);
+
+        mPreviewView.setScanCallback(resultCallback);
+
+        // 取得螢幕解析度
+        DisplayMetrics dm = new DisplayMetrics();
+        this.getWindowManager().getDefaultDisplay().getMetrics(dm);
+        int vWidth = dm.widthPixels;
+
+        //  設定layout的長寬
+        Capture_Layout.setLayoutParams(new LinearLayout.LayoutParams(vWidth, vWidth/2));
+        //  設定中間框長寬
+        mScanCropView.setLayoutParams(new LinearLayout.LayoutParams(vWidth/2, vWidth/2));
+    }
+
+    /**
+     * QrCode掃描成功後的callback
+     **/
+    private QrCodeCallback resultCallback = new QrCodeCallback() {
+        @Override
+        public void onScanResult(String result) {
+            Layout_Main.removeAllViews();
+            Layout_Main.addView(layout_App);
+            QrcodeStopScan();
+            GetQrCodeAction(result);
+        }
+    };
+
+    /**
+     * QrCode停止掃描
+     **/
+    private void QrcodeStopScan() {
+        mScanAnimator.cancel();
+        mPreviewView.stop();
+    }
+
+    /**
+     * QrCode開始掃描
+     **/
+    private void startScanQrCode() {
+        if (mPreviewView.start()) {
+            Layout_Main.removeAllViews();
+            Layout_Main.addView(View_Qrcode);
+            if (mScanAnimator == null) {
+                int height = mScanCropView.getMeasuredHeight() - 25;
+                mScanAnimator = ObjectAnimator.ofFloat(mScanLine, "translationY", 0F, height).setDuration(3000);
+                mScanAnimator.setInterpolator(new LinearInterpolator());
+                mScanAnimator.setRepeatCount(ValueAnimator.INFINITE);
+                mScanAnimator.setRepeatMode(ValueAnimator.REVERSE);
+            }
+            mScanAnimator.start();
+        } else {
+            new android.support.v7.app.AlertDialog.Builder(this)
+                    .setTitle("camera_failure")
+                    .setMessage("camera_hint")
+                    .setCancelable(false)
+                    .setPositiveButton("ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            finish();
+                        }
+                    })
+                    .show();
+        }
+    }
+
+    /**
+     * 取得QrCode內容，進行分析
+     **/
+    public void GetQrCodeAction(final String QrCodeResult) {
+        //Tark
+        byte[] s = NightbunMac(QrCodeResult).getBytes();
+
+        if (s[2] == 'S') {
+            mDeviceType = "S";
+            GetSetting30A();
+            TextView_Setting_Type.setText("S");
+        } else if (s[2] == 'D') {
+            mDeviceType = "D";
+            GetSetting50A();
+            TextView_Setting_Type.setText("D");
+        } else {
+            if (mToast == null) {
+                mToast = Toast.makeText(MainActivity.this, "Wrong format", Toast.LENGTH_LONG);
+            } else {
+                mToast.setText("Wrong format");
+            }
+            mToast.show();
+            return;
+        }
+        TextView_Mac.setText(QrCodeResult);
+        Layout_Display.removeAllViews();
+        Layout_Display.addView(View_Setting);
+        EditText_Device_Name.setText("");
+        EditText_Device_Name.requestFocus();
+    }
+
+    /**
+     * 將玖邦的裝置識別轉成永望的
+     * @param Mac 要轉的Mac- PMD      000717E206
+     * @return 轉完的Mac-    APMD00717E206
+     */
+    public String YuWaMac (String Mac) {
+        //PMD      000717E206
+        //     V
+        //APMD00717E206
+        if (Mac == null) return "error";
+        byte[] s = Mac.getBytes();
+        byte[] change = new byte[13];
+        if (s.length == 19) {//change[0]
+            switch(s[9]) {
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    change[0] = (byte)(s[9] + 0x11);
+                    break;
+                case 'A':
+                case 'B':
+                case 'C':
+                case 'D':
+                case 'E':
+                case 'F':
+                    change[0] = (byte)(s[9] + 0xA);
+                    break;
+                default:
+                    change[0] = 'Z';
+                    break;
+            }
+            for (int i = 0; i < 3; i++) {//change[1-3]
+                change[1 + i] = s[i];
+            }
+            for (int i = 0; i < 9; i++) {//change[4-12]
+                change[4 + i] = s[i + 10];
+            }
+            return new String(change);
+        } else {
+            return "error";
+        }
+    }
+
+    /**
+     * 將永望的裝置識別轉成玖邦的
+     * @param Mac 要轉的Mac- APMD00717E206
+     * @return 轉完的Mac-    PMD      000717E206
+     */
+    public String NightbunMac (String Mac) {
+        if (Mac == null) return "error";
+        //APMD00717E206
+        //     V
+        //PMD      000717E206
+        byte[] s = Mac.getBytes();
+        byte[] change = new byte[19];
+        if (s.length == 13) {//change[0]
+            for (int i = 0; i < 3; i++) {//change[0-2]
+                change[i] = s[i + 1];
+            }
+            for (int i = 0; i < 6; i++) {//change[3-8]
+                change[i + 3] = ' ';
+            }
+            switch (s[0]) {//change[9]
+                case 'A':
+                case 'B':
+                case 'C':
+                case 'D':
+                case 'E':
+                case 'F':
+                case 'G':
+                case 'H':
+                case 'I':
+                case 'J':
+                    change[9] = (byte)(s[0] - (byte)0x11);
+                    break;
+                case 'K':
+                case 'L':
+                case 'M':
+                case 'N':
+                case 'O':
+                case 'P':
+                    change[9] = (byte)(s[0] - (byte)0x0A);
+                    break;
+            }
+            for (int i = 0; i < 9; i++) {//change[10-18]
+                change[i + 10] = s[i + 4];
+            }
+            return new String(change);
+        } else {
+            return "error";
+        }
+    }
     /**↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓Function↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓**/
     /**
      * 開啟APP後顯示Logo並等待四秒後關閉
@@ -739,6 +1211,11 @@ public class MainActivity extends AppCompatActivity {
      * 將宣告與物件做連結
      **/
     private void LinkObjectCommon() {
+
+        //  Main與物件進行連結
+        Layout_Main = (RelativeLayout) findViewById(R.id.layout_main);
+        layout_App = (RelativeLayout) findViewById(R.id.layout_app);
+
         //  Display與物件進行連結
         Layout_Display = (RelativeLayout) findViewById(R.id.display_RelativeLayout);
 
@@ -748,6 +1225,15 @@ public class MainActivity extends AppCompatActivity {
         View_Value_50A = layoutInflater.inflate(R.layout.layout_value_50a, null);
         View_Scan = layoutInflater.inflate(R.layout.layout_scan, null);
         View_Setting = layoutInflater.inflate(R.layout.layout_setting, null);
+        View_SettingDelete = layoutInflater.inflate(R.layout.layout_settingdelete, null);
+        View_SettingMenu = layoutInflater.inflate(R.layout.layout_settingmenu, null);
+        View_SettingSet = layoutInflater.inflate(R.layout.layout_settingset, null);
+        View_Qrcode = layoutInflater.inflate(R.layout.layout_qr_scan , null);
+
+        // Setting介面物件連結
+        EditText_Device_Name = (EditText) View_Setting.findViewById(R.id.EditText_Device_Name);
+        TextView_Mac = (TextView) View_Setting.findViewById(R.id.TextView_Mac);
+        TextView_Setting_Type = (TextView) View_Setting.findViewById(R.id.TextView_Setting_Type);
 
         //  Button與物件做連結
         Button_Scan = (ImageButton) findViewById(R.id.Button_Scan);
@@ -761,11 +1247,13 @@ public class MainActivity extends AppCompatActivity {
         Button_Volt_Min_Add = (ImageButton) View_Setting.findViewById(R.id.Button_Volt_Min_Add);
         Button_Amp_Max_Sub = (ImageButton) View_Setting.findViewById(R.id.Button_Amp_Max_Sub);
         Button_Amp_Max_Add = (ImageButton) View_Setting.findViewById(R.id.Button_Amp_Max_Add);
-        Button_Qrcode_Scan = (Button) View_Setting.findViewById(R.id.Button_Add_device);
+        Button_Setting_Add = (ImageButton) View_SettingMenu.findViewById(R.id.Button_Scan_Add);
+        Button_Setting_Set= (ImageButton) View_SettingMenu.findViewById(R.id.Button_Scan_Set);
+        Button_Setting_Delete = (ImageButton) View_SettingMenu.findViewById(R.id.Button_Scan_Delete);
+        Button_Delete = (ImageButton) View_SettingDelete.findViewById(R.id.Button_Delete);
+        Button_App_Update = (ImageButton) View_SettingMenu.findViewById(R.id.Button_App_Update);
+        Button_Apply = (ImageButton) View_Setting.findViewById(R.id.Button_apply);
 
-        // check與物件做連結，非activity_main的物件，所以需要該layout的View
-        Checkbox_Option_30A = (CheckBox) View_Setting.findViewById(R.id.CheckBox_30a);
-        Checkbox_Option_50A = (CheckBox) View_Setting.findViewById(R.id.CheckBox_50a);
 
         //  LedTextView與物件做連結
         LedText_Limit_Energy_Max = (LedTextView) View_Setting.findViewById(R.id.Textview_Energy_Max);
@@ -775,22 +1263,26 @@ public class MainActivity extends AppCompatActivity {
 
         //  ListView與物件做連結
         ListView_BLE = (ListView) View_Scan.findViewById(R.id.ListView_BLE);
+        ListView_SettingDelete = (ListView) View_SettingDelete.findViewById(R.id.ListView_SettingDelete);
+        ListView_Set = (ListView) View_SettingSet.findViewById(R.id.ListView_SettingSet);
 
         //  ImageView與物件做連結
         Imageview_scan = (ImageView)View_Scan.findViewById(R.id.Imageview_animation);
     }
     /**
-     * 將宣告與物件做連結
+     * 將宣告與物件做連結，監聽Button_Reset的作用
      **/
     private void LinkObjectValue() {
         if (isPage30A) {
+            Button_Reset = (ImageButton) View_Value_30A.findViewById(R.id.Button_Reset_30A);
             Textview_connected = (TextView) View_Value_30A.findViewById(R.id.textview_connected_30A);
             LedText_Value_Energy_30A = (LedTextView) View_Value_30A.findViewById(R.id.Textview_Value_Energy_30a);
             LedText_Value_Watt_30A = (LedTextView) View_Value_30A.findViewById(R.id.Textview_Value_Watt_30a);
             LedText_Value_Volt_30A = (LedTextView) View_Value_30A.findViewById(R.id.Textview_Value_Volt_30a);
             LedText_Value_Amp_30A = (LedTextView) View_Value_30A.findViewById(R.id.Textview_Value_Amp_30a);
         } else {
-            Textview_connected = (TextView) View_Value_30A.findViewById(R.id.textview_connected_50A);
+            Button_Reset = (ImageButton) View_Value_50A.findViewById(R.id.Button_Reset_50A);
+            Textview_connected = (TextView) View_Value_50A.findViewById(R.id.textview_connected_50A);
             LedText_Value_Energy_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Energy_30a);
             LedText_Value_Watt_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Watt_30a);
             LedText_Value_Volt_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Volt_30a);
@@ -798,6 +1290,43 @@ public class MainActivity extends AppCompatActivity {
             LedText_Value_Volt_50A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Volt_50a);
             LedText_Value_Amp_50A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Amp_50a);
         }
+        Button_Reset.setOnClickListener(null);
+        Button_Reset.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mConnected && mBluetoothLeService.mBluetoothGatt != null) {
+                    byte[] Data = new byte[]{'R', 'E', 'S', 'E', 't'};
+                    boolean status = mBluetoothLeService.mWriteCharacteristric.setValue(Data);
+                    Log.d("test", "Status:"+status);
+                    status = mBluetoothLeService.mBluetoothGatt.writeCharacteristic(mBluetoothLeService.mWriteCharacteristric);
+                    Log.d("test", "Status:"+status);
+                    mReseting = true;
+                    if (mToast == null) {
+                        mToast = Toast.makeText(MainActivity.this, "Start reset", Toast.LENGTH_LONG);
+                    } else {
+                        mToast.setText("Start reset");
+                    }
+                    mToast.show();
+
+                    //進行Reset後，八秒沒有將Energy歸零，則顯示Fail
+                    mResetHandler = new Handler();
+                    mResetHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (mReseting) {
+                                if (mToast == null) {
+                                    mToast = Toast.makeText(MainActivity.this, "Reset failed", Toast.LENGTH_LONG);
+                                } else {
+                                    mToast.setText("Reset failed");
+                                }
+                                mToast.show();
+                                mReseting = false;
+                            }
+                        }
+                    }, 8000);
+                }
+            }
+        });
     }
     /**
      * 確認setting檔案是否存在，存在的話直接讀取值，不存在的話create檔案並給予Default
@@ -849,7 +1378,6 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
-//        File_30A.delete();
 
         String Filename_50A = "File_50A.txt";
         File File_50A = new File(getFilesDir().getAbsolutePath() + "/" + Filename_50A);
@@ -894,11 +1422,96 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
-//        File_50A.delete();
     }
 
     /**
-     * 確認connect過的Device，存在則讀取並儲存DeviceName，不存在則無
+     * 確認允許scan的Device，檔案存在則讀取，不存在則無
+     **/
+    private void CheckScanDevice() {
+        String Filename_ScanMac = "ScanMac.txt";
+        File File_ScanMac = new File(getFilesDir().getAbsolutePath() + "/" + Filename_ScanMac);
+        String Filename_ScanName = "ScanName.txt";
+        File File_ScanName = new File(getFilesDir().getAbsolutePath() + "/" + Filename_ScanName);
+        String Filename_ScanType = "ScanType.txt";
+        File File_ScanType = new File(getFilesDir().getAbsolutePath() + "/" + Filename_ScanType);
+        mList_ScanDeviceMac = new ArrayList<>();
+        mList_ScanDeviceName = new ArrayList<>();
+        mList_ScanDeviceType = new ArrayList<>();
+
+        if (File_ScanMac.exists() && File_ScanName.exists() && File_ScanType.exists()) {
+            Log.d("Test", "File_ScanMac Exists");
+            try {
+                FileInputStream InputMac = openFileInput(Filename_ScanMac);
+                DataInputStream DataInputMac = new DataInputStream(InputMac);
+                BufferedReader ReaderMac = new BufferedReader(new InputStreamReader(DataInputMac));
+                String ContentMac = ReaderMac.readLine();
+                Log.d("test", "Scan Mac:" + ContentMac);
+                InputMac.close();
+
+                if (ContentMac == null) {
+                    File_ScanMac.delete();
+                    return;
+                }
+
+                String[] tokenMac = ContentMac.split(",");
+                for (String tmp : tokenMac) {
+                    mList_ScanDeviceMac.add(tmp);
+                }
+
+                FileInputStream InputName = openFileInput(Filename_ScanName);
+                DataInputStream DataInputName = new DataInputStream(InputName);
+                BufferedReader ReaderName = new BufferedReader(new InputStreamReader(DataInputName));
+                String ContentName = ReaderName.readLine();
+                Log.d("test", "Scan Name:" + ContentName);
+                InputName.close();
+
+                if (ContentName == null) {
+                    File_ScanName.delete();
+                    return;
+                }
+
+                String[] tokenName = ContentName.split(",");
+                for (String tmp : tokenName) {
+                    mList_ScanDeviceName.add(tmp);
+                }
+
+                FileInputStream InputType = openFileInput(Filename_ScanType);
+                DataInputStream DataInputType = new DataInputStream(InputType);
+                BufferedReader ReaderType = new BufferedReader(new InputStreamReader(DataInputType));
+                String ContentType = ReaderType.readLine();
+                Log.d("test", "Scan Type:" + ContentType);
+                InputType.close();
+
+                if (ContentType == null) {
+                    File_ScanType.delete();
+                    return;
+                }
+
+                String[] tokenType = ContentType.split(",");
+                for (String tmp : tokenType) {
+                    mList_ScanDeviceType.add(tmp);
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            //若檔案單獨存在則全刪除
+            if (File_ScanMac.exists()) {
+                File_ScanMac.delete();
+            }
+            if (File_ScanName.exists()) {
+                File_ScanName.delete();
+            }
+            if (File_ScanType.exists()) {
+                File_ScanType.delete();
+            }
+        }
+    }
+
+    /**
+     * 確認connect過的Device，檔案存在則讀取並儲存DeviceName，不存在則無
      **/
     private void CheckConnectedData() {
         String Content;
@@ -928,7 +1541,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
     /**
      * 將Setting 傳到textview上
      **/
@@ -971,14 +1583,11 @@ public class MainActivity extends AppCompatActivity {
             // 若mConnected_list沒有，則直接擺最後面
             Log.d("Test", "File_Connected Exists");
             if (mConnected_list.contains(mDeviceAddress)) {
-                Log.d("test", String.valueOf(mConnected_list.indexOf(mDeviceAddress)));
                 mConnected_list.remove(mDeviceAddress);
                 mConnected_list.add(mDeviceAddress);
-                Log.d("test2", String.valueOf(mConnected_list.indexOf(mDeviceAddress)));
             } else {
                 mConnected_list.add(mDeviceAddress);
             }
-            Log.d ("test3", String.valueOf(mConnected_list.size()));
 
             //  將排列好順序的mConnected_list寫入檔案
             try {
@@ -996,7 +1605,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 跳出Dialog視窗
+     * 跳出Alarm的Dialog視窗
      * String AlarmString: Dialog的視窗內容
      **/
     private void AlarmDialog(final int NotifyId, String AlarmString) {
@@ -1017,7 +1626,7 @@ public class MainActivity extends AppCompatActivity {
      * 更新limit value且輸出至檔案
      **/
     private void SaveSetting() {
-        if (Checkbox_Option_30A.isChecked()) {
+        if (TextView_Setting_Type.getText().toString() == "S") {
             try {
                 FileOutputStream Output = openFileOutput("File_30A.txt", Context.MODE_PRIVATE);
                 Output.write((LedText_Limit_Energy_Max.getText().toString() + " " +
@@ -1034,7 +1643,7 @@ public class MainActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } else if (Checkbox_Option_50A.isChecked()) {
+        } else if (TextView_Setting_Type.getText().toString() == "D") {
             try {
                 FileOutputStream Output = openFileOutput("File_50A.txt", Context.MODE_PRIVATE);
                 Output.write((LedText_Limit_Energy_Max.getText().toString() + " " +
@@ -1087,7 +1696,6 @@ public class MainActivity extends AppCompatActivity {
      **/
     @Override
     protected void onResume() {
-
         /**Bluetooth未開啟的話，要求使用者開啟**/
         if (!mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
@@ -1150,39 +1758,43 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 當Bluetooth、GPS、未連線且LOGO結束，自動進行Scan
+     * 當Bluetooth開啟、GPS開啟、未連線且LOGO結束，自動進行Scan
      **/
     private Handler AutoScanHandle = new Handler() {
         Boolean Bluetooth;
-
         public void handleMessage(Message msg) {
             Bluetooth = mBluetoothAdapter.isEnabled();
-            if (Build.VERSION.SDK_INT >= 23) {
-                if (Bluetooth && mGpsOpen && !mConnected && mAppLogoEnd) {
-                    AutoScanTimer.cancel();
-                    AutoScanTimer = null;
-                    /**添加layout_Value的View進Display**/
-                    Layout_Display.removeAllViews();
-                    Layout_Display.addView(View_Scan);
-                    scanLeDevice(Bluetooth);
+            if (mList_ScanDeviceMac.size() > 0) {
+                if (Build.VERSION.SDK_INT >= 23) {
+                    if (Bluetooth && mGpsOpen && !mConnected && mAppLogoEnd) {
+                        AutoScanTimer.cancel();
+                        AutoScanTimer = null;
+                        Layout_Display.removeAllViews();
+                        Layout_Display.addView(View_Scan);
+                        scanLeDevice(Bluetooth);
+                    }
+                } else {
+                    if (Bluetooth && !mConnected && mAppLogoEnd) {
+                        AutoScanTimer.cancel();
+                        AutoScanTimer = null;
+                        Layout_Display.removeAllViews();
+                        Layout_Display.addView(View_Scan);
+
+                        mScanning = false;
+                        Imageview_scan.setVisibility(View.INVISIBLE);
+                        AnimationDrawable.stop();
+
+                        mHandler.postDelayed(ScanTimeRun, SCAN_PERIOD);
+                        mTimerScan = new Timer(true);
+                        //5.0.2須不斷Scan才能掃到裝置
+                        mTimerScan.schedule(new Task_ScanContinued(), 0, 250);
+                    }
                 }
             } else {
-                if (Bluetooth && !mConnected && mAppLogoEnd) {
-                    AutoScanTimer.cancel();
-                    AutoScanTimer = null;
-                    /**添加layout_Value的View進Display**/
-                    Layout_Display.removeAllViews();
-                    Layout_Display.addView(View_Scan);
-
-                    mScanning = false;
-                    Imageview_scan.setVisibility(View.INVISIBLE);
-                    AnimationDrawable.stop();
-
-                    mHandler.postDelayed(ScanTimeRun, SCAN_PERIOD);
-                    mTimerScan = new Timer(true);
-                    //5.0.2須不斷Scan才能掃到裝置
-                    mTimerScan.schedule(new Task_ScanContinued(), 0, 500);
-                }
+                AutoScanTimer.cancel();
+                AutoScanTimer = null;
+                Layout_Display.removeAllViews();
+                Layout_Display.addView(View_SettingMenu);
             }
             super.handleMessage(msg);
         }
@@ -1216,6 +1828,15 @@ public class MainActivity extends AppCompatActivity {
                     mListBluetoothDevice.clear();
                     mDevice_list.clear();
                     mDeviceAdress_list.clear();
+
+                    //如果是連線狀態，直接添加當前的設備至scan list
+                    if (mConnected && mList_ScanDeviceMac.contains(mBluetoothDevice.getName())) {
+                        mScanDeviceNum ++;
+                        mListBluetoothDevice.add(mBluetoothDevice);
+                        int index = mList_ScanDeviceMac.indexOf(mBluetoothDevice.getName());
+                        mDevice_list.add(mList_ScanDeviceName.get(index));
+                        mDeviceAdress_list.add(mBluetoothDevice.getAddress().toString());
+                    }
                     ListView_BLE.invalidateViews();
                     if (mToast == null) {
                         mToast = Toast.makeText(MainActivity.this, "Scanning", Toast.LENGTH_LONG);
@@ -1223,6 +1844,7 @@ public class MainActivity extends AppCompatActivity {
                         mToast.setText("Scanning");
                     }
                     mToast.show();
+                    //轉圈圈動畫
                     Imageview_scan.setVisibility(View.VISIBLE);
                     AnimationDrawable.start();
                 }
@@ -1247,19 +1869,22 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         //  startActivityForResult未開啟藍牙，則結束APP
-        if (requestCode == RQS_ENABLE_BLUETOOTH && resultCode == Activity.RESULT_CANCELED) {
-            finish();
-            return;
-        }
-        //  重新Get，因為未開啟藍牙，則OnCreate時無法正確Get Scanner
-        getBluetoothAdapterAndLeScanner();
+        if (requestCode == RQS_ENABLE_BLUETOOTH) {
 
-        if (mBluetoothLeScanner == null) {
-            Toast.makeText(this, "mBluetoothLeScanner==null", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
+            if(resultCode == Activity.RESULT_CANCELED) {
+                finish();
+                return;
+            }
 
+            //  重新Get，因為未開啟藍牙，則OnCreate時無法正確Get Scanner
+            getBluetoothAdapterAndLeScanner();
+
+            if (mBluetoothLeScanner == null) {
+                Toast.makeText(this, "mBluetoothLeScanner==null", Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
+        }
         super.onActivityResult(requestCode, resultCode, data);
     }
 
@@ -1281,12 +1906,10 @@ public class MainActivity extends AppCompatActivity {
             case REQUEST_CAMREA_PERMISSION:
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    //取得權限
-                    IntentIntegrator scanIntegrator = new IntentIntegrator(MainActivity.this);
-                    scanIntegrator.initiateScan();
+                    //取得權限，開始QRcode掃描
+                    startScanQrCode();
                 } else {
                     //使用者拒絕權限
-
                 }
                 break;
         }
@@ -1315,7 +1938,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 進行scan device
+     * 進行SDK>=6.0 scan device
      **/
     private void scanLeDevice(final boolean enable) {
         mScanDeviceNum = 0;
@@ -1329,6 +1952,14 @@ public class MainActivity extends AppCompatActivity {
             mDevice_list.clear();
             mDeviceAdress_list.clear();
 
+            //如果是連線狀態，直接添加當前的設備至scan list
+            if (mConnected && mList_ScanDeviceMac.contains(mBluetoothDevice.getName())) {
+                mScanDeviceNum ++;
+                mListBluetoothDevice.add(mBluetoothDevice);
+                int index = mList_ScanDeviceMac.indexOf(mBluetoothDevice.getName());
+                mDevice_list.add(mList_ScanDeviceName.get(index));
+                mDeviceAdress_list.add(mBluetoothDevice.getAddress().toString());
+            }
             //  重新顯示listView
             ListView_BLE.invalidateViews();
 
@@ -1343,10 +1974,12 @@ public class MainActivity extends AppCompatActivity {
             }
             mToast.show();
             mScanning = true;
+            //轉圈圈動畫
             Imageview_scan.setVisibility(View.VISIBLE);
             AnimationDrawable.start();
         } else {
             mScanning = false;
+            //隱藏轉圈圈動畫
             Imageview_scan.setVisibility(View.INVISIBLE);
             AnimationDrawable.stop();
         }
@@ -1387,9 +2020,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 mToast.show();
             } else {
-                Toast.makeText(MainActivity.this,
-                        "Bluetooth is close",
-                        Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "Bluetooth is close", Toast.LENGTH_LONG).show();
             }
             mScanning = false;
             Imageview_scan.setVisibility(View.INVISIBLE);
@@ -1427,14 +2058,34 @@ public class MainActivity extends AppCompatActivity {
         }
 
         private void addBluetoothDevice(BluetoothDevice device) {
+//            if (device.getName() != null) {
+//                //  判斷Device存不存在BluetoothList
+//                if (!mListBluetoothDevice.contains(device)) {
+//                    mScanDeviceNum ++;
+//                    //  將Device存進BluetoothList
+//                    mListBluetoothDevice.add(device);
+//                    //  將Device名稱存進Device_list
+//                    mDevice_list.add(device.getName());
+//                    mDeviceAdress_list.add(device.getAddress().toString());
+//                    //  重新顯示listView
+//                    ListView_BLE.invalidateViews();
+//                }
+//            }
+            int index;
+
+
+            Log.d("check", "Scan DeviceName:"+device.getName());
             if (device.getName() != null) {
+                if (!mList_ScanDeviceMac.contains(device.getName()))
+                    return;
                 //  判斷Device存不存在BluetoothList
                 if (!mListBluetoothDevice.contains(device)) {
                     mScanDeviceNum ++;
                     //  將Device存進BluetoothList
                     mListBluetoothDevice.add(device);
                     //  將Device名稱存進Device_list
-                    mDevice_list.add(device.getName().toString());
+                    index = mList_ScanDeviceMac.indexOf(device.getName());
+                    mDevice_list.add(mList_ScanDeviceName.get(index));
                     mDeviceAdress_list.add(device.getAddress().toString());
                     //  重新顯示listView
                     ListView_BLE.invalidateViews();
@@ -1466,13 +2117,15 @@ public class MainActivity extends AppCompatActivity {
             action = intent.getAction();
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
                 mConnected = true;
-                Textview_connected.setText(mConnectDeviceName);
                 Layout_Display.removeAllViews();
                 if (isPage30A) {
+                    Log.d("check", "Connect:30A");
                     Layout_Display.addView(View_Value_30A);
                 } else {
+                    Log.d("check", "Connect:50A");
                     Layout_Display.addView(View_Value_50A);
                 }
+                mCurrentConnect = mConnectDeviceName;
                 Log.d("Paul", "Connected");
                 if (mToast == null) {
                     mToast = Toast.makeText(MainActivity.this, mConnectDeviceName + " connected", Toast.LENGTH_SHORT);
@@ -1480,9 +2133,12 @@ public class MainActivity extends AppCompatActivity {
                     mToast.setText(mConnectDeviceName + " connected");
                 }
                 mToast.show();
+                if (mNotifiyManager != null) {
+                    mNotifiyManager.cancel(1);
+                }
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 mConnected = false;
-                Textview_connected.setText("Empty");
+                mCurrentConnect = "Empty";
                 Log.d("Paul", "Connect Fail");
                 if (mToast == null) {
                     mToast = Toast.makeText(MainActivity.this, mConnectDeviceName + " disconnected", Toast.LENGTH_SHORT);
@@ -1501,23 +2157,120 @@ public class MainActivity extends AppCompatActivity {
     };
 
     /**
+     * 將Byte[4]轉成Double
+     **/
+    private double Byte42double(byte[] data, int sAddr) {
+        double[] Index;
+        Index = new double[4];
+
+        for (int i = 0; i < 4; i++) {
+            Index[i] = data[sAddr + i] & 0x00000000000000FF;
+//            Log.d("test", String.valueOf(i) +":" +String.valueOf(Index[i]));
+        }
+        return ((Index[0] * 16777216) + (Index[1] * 65536) + (Index[2] * 256) + Index[3]);
+    }
+
+    /**
+     * 進行Refresh，判斷30A/50A裝置，判斷是否Reset成功
+     **/
+    private void Refresh(byte[] Data) {
+        Log.d("check","Get BLE Data");
+        if (mReseting && Data != null) {
+            if (Data.length == 5) {
+                //取的資料RESEt則代表成功送reset指令
+                if (Data[0] == 'R' && Data[1] == 'E' && Data[2] == 'S' && Data[3] == 'E' && Data[4] == 'T') {
+                    if (mToast == null) {
+                        mToast = Toast.makeText(MainActivity.this, "Resetting", Toast.LENGTH_LONG);
+                    } else {
+                        mToast.setText("Resetting");
+                    }
+                    mToast.show();
+                }
+                return;
+            }
+            if (isPage30A) {//30A判斷值是否歸零
+                if (Data.length == 20 && Data[0] == 0x01 && Data[1] == 0x03 && Data[2] == 0x20 &&
+                        Data[15] == 0x00 && Data[16] == 0x00 && Data[17] == 0x00 && Data[18] == 0x00) {
+                    mReseting = false;
+                    if (mToast == null) {
+                        mToast = Toast.makeText(MainActivity.this, "Reset success", Toast.LENGTH_LONG);
+                    } else {
+                        mToast.setText("Reset success");
+                    }
+                    mToast.show();
+                }
+            } else {//50A判斷值是否歸零
+                if (Data.length == 20) {
+                    if (Data[0] == 0x01 && Data[1] == 0x03 && Data[2] == 0x20) {
+                        mData = Data;
+                    } else if (Data[17] == 0x00 && Data[18] == 0x00 && Data[19] == 0x00) {
+                        if (mData.length == 20 && mData[0] == 0x01 && mData[1] == 0x03 && mData[2] == 0x20 &&
+                                mData[15] == 0x00 && mData[16] == 0x00 && mData[17] == 0x00 && mData[18] == 0x00) {
+                            mChannel0 = true;
+                        }
+                    } else if (Data[17] == 0x01 && Data[18] == 0x01 && Data[19] == 0x01) {
+                        if (mData.length == 20 && mData[0] == 0x01 && mData[1] == 0x03 && mData[2] == 0x20 &&
+                                mData[15] == 0x00 && mData[16] == 0x00 && mData[17] == 0x00 && mData[18] == 0x00) {
+                            mChannel1 = true;
+                        }
+                    }
+                }
+                //50A需要確認channel0跟1都歸零
+                if (mChannel0 && mChannel1) {
+                    mReseting = false;
+                    mChannel0 = false;
+                    mChannel1 = false;
+                    if (mToast == null) {
+                        mToast = Toast.makeText(MainActivity.this, "Reset success", Toast.LENGTH_LONG);
+                    } else {
+                        mToast.setText("Reset success");
+                    }
+                    mToast.show();
+                }
+            }
+            return;
+        }
+        if (Data != null) {
+            if (isPage30A) {//30A
+                if (Data[0] == 0x01 && Data[1] == 0x03 && Data[2] == 0x20) {
+                    Decode_data(Data, 0);
+                }
+            } else if (!isPage30A && Data.length == 20) {// 50A
+                if (Data[0] == 0x01 && Data[1] == 0x03 && Data[2] == 0x20) {
+                    mData = Data;
+                } else if (Data[17] == 0x00 && Data[18] == 0x00 && Data[19] == 0x00) {
+                    if (mData != null) {
+                        Decode_data(mData, 0);
+                        mData = null;
+                    }
+                } else if (Data[17] == 0x01 && Data[18] == 0x01 && Data[19] == 0x01) {
+                    if (mData != null) {
+                        Decode_data(mData, 1);
+                        mData = null;
+                    }
+                }
+            }
+        }
+        Textview_connected.setText(mCurrentConnect);
+        ValueMonitor();
+    }
+
+    /**
      * 解析從藍牙讀取的資料
      **/
-    private void Decode_data(byte[] data) {
-        double Value_Watt_30A;
-        double Value_Watt_50A;
-        double Value_Energy_30A;
-        double Value_Energy_50A;
+    private void Decode_data(byte[] data, int channel) {
 
-        mValue_Volt_30A = Byte42double(data, 3) / 10000;
-        mValue_Amp_30A = Byte42double(data, 7) / 10000;
-        Value_Watt_30A = Byte42double(data, 11) / 10000;
-        Value_Energy_30A = Byte42double(data, 15) / 10000;
-
-        Value_Watt_50A = 0;
-        Value_Energy_50A = 0;
-        mValue_Volt_50A = 0;
-        mValue_Amp_50A = 0;
+        if (channel == 0) {
+            mValue_Volt_30A = Byte42double(data, 3) / 10000;
+            mValue_Amp_30A = Byte42double(data, 7) / 10000;
+            Value_Watt_30A = Byte42double(data, 11) / 10000;
+            Value_Energy_30A = Byte42double(data, 15) / 10000;
+        } else {
+            mValue_Volt_50A = Byte42double(data, 3) / 10000;
+            mValue_Amp_50A = Byte42double(data, 7) / 10000;
+            Value_Watt_50A = Byte42double(data, 11) / 10000;
+            Value_Energy_50A = Byte42double(data, 15) / 10000;
+        }
 
         if (isPage30A) {
             mValue_Watt = Value_Watt_30A;
@@ -1530,29 +2283,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 將Byte[4]轉成Double
-     **/
-    private double Byte42double(byte[] data, int sAddr) {
-        double[] mIndex;
-        mIndex = new double[4];
-
-        for (int i = 0; i < 4; i++) {
-            mIndex[i] = data[sAddr + i] & 0x00000000000000FF;
-//            Log.d("test", String.valueOf(i) +":" +String.valueOf(mIndex[i]));
-        }
-        return ((mIndex[0] * 16777216) + (mIndex[1] * 65536) + (mIndex[2] * 256) + mIndex[3]);
-    }
-
-    /**
-     * 進行Refresh的行為
-     **/
-    private void Refresh(byte[] Data) {
+     *  顯示並監測數據是否Over
+     * */
+    private void ValueMonitor () {
         int NotifiyId;
         String Tmp_Max;
         String Tmp_Min;
         //顯示幾位
         DecimalFormat DecimalFormat_Common = new DecimalFormat("#");
+        //Tark
         DecimalFormat DecimalFormat_Energy = new DecimalFormat("#.0");
+//        DecimalFormat DecimalFormat_Energy = new DecimalFormat("#.###");
         DecimalFormat DecimalFormat_Amp = new DecimalFormat("#.0");
         DecimalFormat_Common.setRoundingMode(RoundingMode.HALF_UP);
         DecimalFormat_Energy.setRoundingMode(RoundingMode.HALF_UP);
@@ -1560,24 +2301,8 @@ public class MainActivity extends AppCompatActivity {
         //位數不足補零
         DecimalFormat_Common.applyPattern("0");
         DecimalFormat_Energy.applyPattern("0.0");
+//        DecimalFormat_Energy.applyPattern("0.000");
         DecimalFormat_Amp.applyPattern("0.0");
-
-        if (Data != null && Data[0] == 0x01 && Data[1] == 0x03 && Data[2] == 0x20) {
-            Log.d("test", "NeedData");
-            Decode_data(Data);
-//                        Log.d("test", "success");
-//                        //StringBuffer buffer = new StringBuffer("0x");
-//                        int i;
-//                        int c1 = 0;
-//                        //Log.d("test", "1:");
-//                        for (byte b : Data) {
-//                            i = b & 0xff;
-//                            //buffer.append(Integer.toHexString(i));
-//                            Log.d("test", "read data:"+ String.valueOf(c1)+":" + Integer.toHexString(i));
-//                            c1++;
-//                        }
-        }
-
         Vibrator vb = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
 
         //  當Energy超出setting範圍，改變字體顏色跳出Dialog視窗及震動
@@ -1773,7 +2498,10 @@ public class MainActivity extends AppCompatActivity {
         mHandler.postDelayed(new Runnable(){
             @Override
             public void run() {
-                wl.release();
+                if(wl != null) {
+                    wl.release();
+                    wl = null;
+                }
             }}, 2000);
     }
 
@@ -1785,13 +2513,23 @@ public class MainActivity extends AppCompatActivity {
     private void AutoConnect () {
         if (!mConnected && !mConnected_list.isEmpty()) {
             int ConnectedNum = mConnected_list.size();
+            int index;
             while (ConnectedNum > 0) {
                 int device_index = mDeviceAdress_list.indexOf(mConnected_list.get(ConnectedNum - 1));
                 if (device_index != -1) {
                     final BluetoothDevice device = mListBluetoothDevice.get(device_index);
+                    mBluetoothDevice = device;
                     mDeviceAddress = device.getAddress();
-                    mConnectDeviceName = device.getName();
-
+                    index = mList_ScanDeviceMac.indexOf(device.getName());
+                    Log.d("check", "Auto type:"+mList_ScanDeviceType.get(index));
+                    if (mList_ScanDeviceType.get(index).equals("S")) {
+                        isPage30A = true;
+                    } else if (mList_ScanDeviceType.get(index).equals("D")) {
+                        isPage30A = false;
+                    }
+                    LinkObjectValue();
+                    mConnectDeviceName = mList_ScanDeviceName.get(index);
+                    mDeviceMac = mList_ScanDeviceMac.get(index);
                     //紀錄連接過的Device並進行排列，越後面時間越新
                     WriteConnectedDevice();
 
@@ -1834,68 +2572,45 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * 生成QRcode
-     **/
-//    public void QrCodeCreate(View v)
-//    {
-//        // QR code 的內容
-//        String QRCodeContent = "QR code test";
-//        // QR code 寬度
-//        int QRCodeWidth = 200;
-//        // QR code 高度
-//        int QRCodeHeight = 200;
-//        // QR code 內容編碼
-//        Map<EncodeHintType, Object> hints = new EnumMap<EncodeHintType, Object>(EncodeHintType.class);
-//        hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
-//
-//        MultiFormatWriter writer = new MultiFormatWriter();
-//        try
-//        {
-//            // 容錯率姑且可以將它想像成解析度，分為 4 級：L(7%)，M(15%)，Q(25%)，H(30%)
-//            // 設定 QR code 容錯率為 H
-//            hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
-//
-//            // 建立 QR code 的資料矩陣
-//            BitMatrix result = writer.encode(QRCodeContent, BarcodeFormat.QR_CODE, QRCodeWidth, QRCodeHeight, hints);
-//            // ZXing 還可以生成其他形式條碼，如：BarcodeFormat.CODE_39、BarcodeFormat.CODE_93、BarcodeFormat.CODE_128、BarcodeFormat.EAN_8、BarcodeFormat.EAN_13...
-//
-//            //建立點陣圖
-//            Bitmap bitmap = Bitmap.createBitmap(QRCodeWidth, QRCodeHeight, Bitmap.Config.ARGB_8888);
-//            // 將 QR code 資料矩陣繪製到點陣圖上
-//            for (int y = 0; y<QRCodeHeight; y++)
-//            {
-//                for (int x = 0;x<QRCodeWidth; x++)
-//                {
-//                    bitmap.setPixel(x, y, result.get(x, y) ? Color.BLACK : Color.WHITE);
-//                }
-//            }
-//
-//            ImageView imgView = (ImageView) findViewById(R.id.imageView_QRcode);
-//            // 設定為 QR code 影像
-//            imgView.setImageBitmap(bitmap);
-//        }
-//        catch (WriterException e)
-//        {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        }
-//
-//    }
 
     /**
-     * 掃描QRcode
-     */
-//    public void onActivityResult(int requestCode, int resultCode, Intent intent){
-//        IntentResult scanningResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
-//        if(scanningResult!=null){
-//            String scanContent=scanningResult.getContents();
-//            String scanFormat=scanningResult.getFormatName();
-//            scan_content.setText(scanContent);
-//            scan_format.setText(scanFormat);
-//        }else{
-//            Toast.makeText(getApplicationContext(),"nothing",Toast.LENGTH_SHORT).show();
-//        }
-//    }
+     * 儲存被允許Scan的Device相關訊息
+     **/
+    private void WriteScanDevice() {
+        try {
+            FileOutputStream OutputMac = openFileOutput("ScanMac.txt", Context.MODE_PRIVATE);
+            for (String tmp : mList_ScanDeviceMac) {
+                OutputMac.write((tmp + ",").toString().getBytes());
+            }
+            OutputMac.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            FileOutputStream OutputName = openFileOutput("ScanName.txt", Context.MODE_PRIVATE);
+            for (String tmp : mList_ScanDeviceName) {
+                OutputName.write((tmp + ",").toString().getBytes());
+            }
+            OutputName.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            FileOutputStream OutputType = openFileOutput("ScanType.txt", Context.MODE_PRIVATE);
+            for (String tmp : mList_ScanDeviceType) {
+                OutputType.write((tmp + ",").toString().getBytes());
+            }
+            OutputType.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     /**↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑Function↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑**/
 }
+

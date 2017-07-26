@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <TextView
+        android:id="@+id/tv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="  MY DEVICE"
+        android:textSize="25dp"
+        android:textStyle="bold"/>
+    <ListView
+        android:id="@+id/ListView_SettingDelete"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv"
+        android:layout_above="@+id/Layout"
+        android:paddingTop="5dp"/>
+    <LinearLayout
+        android:id="@+id/Layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:gravity="center">
+        <ImageButton
+            android:id="@+id/Button_Delete"
+            android:layout_width="200dp"
+            android:layout_height="80dp"
+            android:background="@null"
+            android:scaleType="fitXY"
+            app:srcCompat="@drawable/delete" />
+    </LinearLayout>
+</RelativeLayout>

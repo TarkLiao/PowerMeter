@@ -1,32 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <TextView
         android:id="@+id/tv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity=""
-        android:text="  Scan List"
+        android:text="  MY DEVICE"
         android:textSize="25dp"
         android:textStyle="bold"/>
     <ListView
-        android:id="@+id/ListView_BLE"
+        android:id="@+id/ListView_SettingSet"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/tv"
         android:paddingTop="5dp"/>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center">
-        <ImageView
-            android:id="@+id/Imageview_animation"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/scan_animation"/>
-    </LinearLayout>
 </RelativeLayout>
-
-

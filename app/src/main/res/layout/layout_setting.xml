@@ -3,94 +3,123 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/imageView_QRcode"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="45dp"/>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="center_horizontal">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center">
+            android:gravity="center"
+            android:orientation="vertical">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center">
 
+                <TextView
+                    android:id="@+id/padding29"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+                <TextView
+                    android:id="@+id/tv_mac"
+                    android:layout_width="130dp"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/shape"
+                    android:gravity="center"
+                    android:paddingTop="1dp"
+                    android:paddingBottom="1dp"
+                    android:text="Mac Address"
+                    android:textColor="@color/Color_White"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/padding31"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/TextView_Mac"
+                    android:layout_width="180dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:background="@drawable/gray_shape"
+                    android:textColor="@color/Color_White"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/padding34"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+            </LinearLayout>
             <TextView
-                android:id="@+id/padding29"
+                android:id="@+id/padding36"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="1" />
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center">
-                <CheckBox
-                android:id="@+id/CheckBox_30a"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="30A"
-                android:textColor="@color/Color_Blue"
-                android:textSize="25sp"
-                android:textStyle="bold"
-                android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true"
-                android:background="@null"
-                style="@style/checkbox"/>
-
-                <CheckBox
-            android:id="@+id/CheckBox_50a"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="50A"
-            android:textColor="@color/Color_Blue"
-            android:textSize="25sp"
-            android:textStyle="bold"
-            android:layout_below="@+id/CheckBox_30a"
-            android:layout_centerHorizontal="true"
-            android:background="@null"
-            style="@style/checkbox"/>
-            </LinearLayout>
-            <TextView
-                android:id="@+id/padding30"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="0.3" />
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
                 android:gravity="center">
 
-                <Button
-                    android:id="@+id/Button_Add_device"
-                    android:layout_width="120dp"
+                <TextView
+                    android:id="@+id/padding32"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+                <TextView
+                    android:id="@+id/tv_deviceName"
+                    android:layout_width="130dp"
                     android:layout_height="wrap_content"
-                    android:text="Add"
-                    android:textColor="@color/Color_Blue"
-                    android:textSize="25sp"
-                    android:textStyle="bold"
-                    android:clickable="true"
-                    />
-                <Button
-                    android:id="@+id/Button_Delete_device"
-                    android:layout_width="120dp"
+                    android:background="@drawable/shape"
+                    android:gravity="center"
+                    android:paddingTop="1dp"
+                    android:paddingBottom="1dp"
+                    android:text="Device Name"
+                    android:textColor="@color/Color_White"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/padding33"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+
+                <EditText
+                    android:id="@+id/EditText_Device_Name"
+                    android:layout_width="130dp"
                     android:layout_height="wrap_content"
-                    android:text="Delete"
-                    android:textColor="@color/Color_Blue"
-                    android:textSize="25sp"
-                    android:textStyle="bold"
-                    />
+                    android:background="@drawable/orange_shape"
+                    android:textColor="@color/Color_White"
+                    android:singleLine="true"
+                    android:gravity="center"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+
+                <ImageButton
+                    android:id="@+id/Button_apply"
+                    android:layout_width="50dp"
+                    android:layout_height="match_parent"
+                    android:background="@null"
+                    android:scaleType="fitXY"
+                    app:srcCompat="@drawable/save"/>
+                <TextView
+                    android:id="@+id/padding37"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
             </LinearLayout>
-            <TextView
-                android:id="@+id/padding31"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
+
         </LinearLayout>
         <TextView
             android:id="@+id/padding28"
@@ -129,7 +158,21 @@
                 android:id="@+id/padding22"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_weight="9" />
+                android:layout_weight="3" />
+
+            <TextView
+                android:id="@+id/TextView_Setting_Type"
+                android:layout_width="20dp"
+                android:layout_height="wrap_content"
+                android:textSize="25sp"
+                android:textStyle="bold"
+                />
+
+            <TextView
+                android:id="@+id/padding30"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="3" />
         </LinearLayout>
 
         <LinearLayout
