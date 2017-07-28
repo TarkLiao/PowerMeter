@@ -725,7 +725,7 @@ public class MainActivity extends AppCompatActivity {
 
                             //  判斷連接的是30/50A的device
                             int index = mList_ScanDeviceMac.indexOf(device.getName());
-                            if (mList_ScanDeviceType.get(3).equals("S")) {
+                            if (mList_ScanDeviceType.get(index).equals("S")) {
                                 isPage30A = true;
                             } else if (mList_ScanDeviceType.get(index).equals("D")) {
                                 isPage30A = false;
