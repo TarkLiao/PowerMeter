@@ -14,10 +14,10 @@
             android:layout_height="wrap_content"
             android:gravity="center">
             <TextView
-                android:id="@+id/padding30"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="2" />
+
             <TextView
                 android:id="@+id/tv_watchdog_50a"
                 android:layout_width="wrap_content"
@@ -25,12 +25,11 @@
                 android:layout_alignParentTop="true"
                 android:layout_centerHorizontal="true"
                 android:gravity="center"
-                android:text="Power Watchdog\n50A Service"
-                android:textColor="@color/Color_Blue"
+                android:text="Power Watchdog\n50 Amp Service"
+                android:textColor="@color/Color_Red"
                 android:textSize="25sp"
                 android:textStyle="bold" />
             <TextView
-                android:id="@+id/padding28"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="1" />
@@ -41,60 +40,51 @@
                 android:layout_height="40dp"
                 app:srcCompat="@drawable/reset"
                 android:scaleType="fitXY"
-                android:background="@null"
-                />
+                android:background="@null"/>
             <TextView
-                android:id="@+id/padding29"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="2" />
         </LinearLayout>
+        <!-- -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="30dp"
-            android:gravity="left">
+            android:layout_height="wrap_content"
+            android:gravity="center">
+
             <TextView
-                android:id="@+id/padding27"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="3" />
+
             <TextView
-                android:id="@+id/tv_connected"
-                android:layout_width="wrap_content"
+                android:layout_width="95dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true"
-                android:gravity="center"
                 android:text="Connect"
-                android:textColor="@color/Color_Green"
+                android:textColor="@color/Color_Black"
                 android:textSize="20sp"
                 android:textStyle="bold" />
+
             <TextView
-                android:id="@+id/padding25"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="1" />
             <TextView
                 android:id="@+id/textview_connected_50A"
-                android:layout_width="140dp"
+                android:layout_width="180dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="10"
-                android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true"
-                android:gravity="left"
                 android:text="Empty"
-                android:textColor="@color/Color_Green"
+                android:textColor="@color/Color_Black"
                 android:textSize="20sp"
                 android:textStyle="bold" />
+
+
             <TextView
-                android:id="@+id/padding26"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_weight="1" />
+                android:layout_weight="3" />
         </LinearLayout>
         <TextView
-            android:id="@+id/padding33"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="0.5" />
@@ -107,7 +97,6 @@
             android:layout_alignParentStart="true">
 
             <TextView
-                android:id="@+id/padding1"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="3" />
@@ -126,7 +115,6 @@
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/padding2"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="1" />
@@ -138,13 +126,12 @@
                 android:layout_gravity="center"
                 android:ellipsize="end"
                 android:gravity="center"
-                android:background="@drawable/orange_shape"
+                android:background="@drawable/shape"
                 android:text="000.0"
                 android:textColor="@color/Color_White"
                 android:textSize="40sp" />
 
             <TextView
-                android:id="@+id/padding3"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="1" />
@@ -155,19 +142,17 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="@string/Unit_Energy"
-                android:textColor="@color/Color_Orange"
+                android:textColor="@color/Color_GrayItem"
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/padding"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="3" />
         </LinearLayout>
 
         <TextView
-            android:id="@+id/padding34"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="1" />
@@ -179,7 +164,6 @@
             android:gravity="center">
 
             <TextView
-                android:id="@+id/padding5"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="3" />
@@ -198,7 +182,6 @@
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/padding6"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="1" />
@@ -210,13 +193,12 @@
                 android:layout_gravity="center"
                 android:ellipsize="end"
                 android:gravity="center"
-                android:background="@drawable/orange_shape"
+                android:background="@drawable/shape"
                 android:text="000"
                 android:textColor="@color/Color_White"
                 android:textSize="40sp" />
 
             <TextView
-                android:id="@+id/padding7"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="1" />
@@ -227,29 +209,26 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="@string/Unit_Watt"
-                android:textColor="@color/Color_Orange"
+                android:textColor="@color/Color_GrayItem"
                 android:textSize="20sp"
                 android:textStyle="bold" />
             <TextView
-                android:id="@+id/padding8"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="3" />
         </LinearLayout>
 
         <TextView
-            android:id="@+id/padding37"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="2" />
 
         <View
             android:layout_width="match_parent"
-            android:layout_height="5dp"
-            android:background="#DDDDDD" />
+            android:layout_height="2dp"
+            android:background="#FF0000" />
 
         <TextView
-            android:id="@+id/padding35"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="2" />
@@ -262,7 +241,6 @@
             android:gravity="center">
 
             <TextView
-                android:id="@+id/padding9"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="4" />
@@ -281,7 +259,6 @@
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/padding10"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="1" />
@@ -307,12 +284,11 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="Line1"
-                        android:textColor="@color/Color_Orange"
+                        android:textColor="@color/Color_GrayItem"
                         android:textSize="20sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/padding20"
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_weight="1" />
@@ -324,13 +300,12 @@
                         android:layout_gravity="center"
                         android:ellipsize="end"
                         android:gravity="center"
-                        android:background="@drawable/orange_shape"
+                        android:background="@drawable/shape"
                         android:text="000"
                         android:textColor="@color/Color_White"
                         android:textSize="40sp" />
 
                     <TextView
-                        android:id="@+id/padding21"
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_weight="1" />
@@ -341,12 +316,11 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="@string/Unit_Volt"
-                        android:textColor="@color/Color_Orange"
+                        android:textColor="@color/Color_GrayItem"
                         android:textSize="20sp"
                         android:textStyle="bold" />
                 </LinearLayout>
                 <TextView
-                    android:id="@+id/padding11"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
                     android:layout_weight="0.1" />
@@ -364,12 +338,11 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="Line2"
-                        android:textColor="@color/Color_Orange"
+                        android:textColor="@color/Color_GrayItem"
                         android:textSize="20sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/padding19"
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_weight="1" />
@@ -381,13 +354,12 @@
                         android:layout_gravity="center"
                         android:ellipsize="end"
                         android:gravity="center"
-                        android:background="@drawable/orange_shape"
+                        android:background="@drawable/shape"
                         android:text="000"
                         android:textColor="@color/Color_White"
                         android:textSize="40sp" />
 
                     <TextView
-                        android:id="@+id/padding22"
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_weight="1" />
@@ -398,7 +370,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="@string/Unit_Volt"
-                        android:textColor="@color/Color_Orange"
+                        android:textColor="@color/Color_GrayItem"
                         android:textSize="20sp"
                         android:textStyle="bold" />
 
@@ -406,15 +378,13 @@
             </LinearLayout>
 
             <TextView
-                android:id="@+id/padding12"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_weight="4" />
+                android:layout_weight="3" />
 
         </LinearLayout>
 
         <TextView
-            android:id="@+id/padding40"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="2" />
@@ -428,10 +398,9 @@
             android:gravity="center">
 
             <TextView
-                android:id="@+id/padding13"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_weight="3" />
+                android:layout_weight="4" />
 
             <TextView
                 android:id="@+id/tv_amp_30a"
@@ -447,7 +416,6 @@
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/padding14"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="1" />
@@ -472,12 +440,11 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="Line1"
-                        android:textColor="@color/Color_Orange"
+                        android:textColor="@color/Color_GrayItem"
                         android:textSize="20sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/padding18"
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_weight="1" />
@@ -489,13 +456,12 @@
                         android:layout_gravity="center"
                         android:ellipsize="end"
                         android:gravity="center"
-                        android:background="@drawable/orange_shape"
+                        android:background="@drawable/shape"
                         android:text="00.0"
                         android:textColor="@color/Color_White"
                         android:textSize="40sp" />
 
                     <TextView
-                        android:id="@+id/padding23"
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_weight="1" />
@@ -506,13 +472,12 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="@string/Unit_Amp"
-                        android:textColor="@color/Color_Orange"
+                        android:textColor="@color/Color_GrayItem"
                         android:textSize="20sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
                 <TextView
-                    android:id="@+id/padding15"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
                     android:layout_weight="0.1" />
@@ -530,11 +495,10 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="Line2"
-                        android:textColor="@color/Color_Orange"
+                        android:textColor="@color/Color_GrayItem"
                         android:textSize="20sp"
                         android:textStyle="bold" />
                     <TextView
-                        android:id="@+id/padding17"
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_weight="1" />
@@ -546,13 +510,12 @@
                         android:layout_gravity="center"
                         android:ellipsize="end"
                         android:gravity="center"
-                        android:background="@drawable/orange_shape"
+                        android:background="@drawable/shape"
                         android:text="00.0"
                         android:textColor="@color/Color_White"
                         android:textSize="40sp" />
 
                     <TextView
-                        android:id="@+id/padding24"
                         android:layout_width="0dp"
                         android:layout_height="0dp"
                         android:layout_weight="1" />
@@ -563,13 +526,12 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="@string/Unit_Amp"
-                        android:textColor="@color/Color_Orange"
+                        android:textColor="@color/Color_GrayItem"
                         android:textSize="20sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
             <TextView
-                android:id="@+id/padding16"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="3" />
@@ -578,7 +540,6 @@
 
 
         <TextView
-            android:id="@+id/padding42"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="5" />

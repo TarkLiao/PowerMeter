@@ -6,8 +6,10 @@
     <color name="Color_Orange">#FF8800</color>
     <color name="Color_GrayOrange">#FFAA44</color>
     <color name="Color_Blue">#0055FF</color>
+    <color name="Color_Red">#FF0000</color>
     <color name="Color_Green">#999900</color>
     <color name="Color_Black">#000000</color>
     <color name="Color_White">#FFFFFF</color>
     <color name="Color_Gray">#AAAAAA</color>
+    <color name="Color_GrayItem">#404745</color>
 </resources>

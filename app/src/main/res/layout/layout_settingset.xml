@@ -7,14 +7,15 @@
         android:id="@+id/tv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity=""
-        android:text="  MY DEVICE"
+        android:gravity="center"
+        android:text="MY DEVICE"
         android:textSize="25dp"
         android:textStyle="bold"/>
     <ListView
         android:id="@+id/ListView_SettingSet"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:divider="@null"
         android:layout_below="@id/tv"
         android:paddingTop="5dp"/>
 </RelativeLayout>

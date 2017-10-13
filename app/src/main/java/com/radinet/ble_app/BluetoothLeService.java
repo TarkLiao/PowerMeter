@@ -61,6 +61,7 @@ public class BluetoothLeService extends Service {
  * **/
     public static BluetoothGattCharacteristic mReadCharacteristric = null;
     public static BluetoothGattCharacteristic mWriteCharacteristric = null;
+    public static int mReconnectCount = 0;
     public static final UUID TRANSFER_SERVICE_READ = UUID.fromString("0000FFE0-0000-1000-8000-00805F9B34FB");
     public static final UUID TRANSFER_CHARACTERISTIC_READ = UUID.fromString("0000FFE2-0000-1000-8000-00805F9B34FB");
     public static final UUID TRANSFER_SERVICE_WRITE = UUID.fromString("0000FFF0-0000-1000-8000-00805F9B34FB");
@@ -108,26 +109,30 @@ public class BluetoothLeService extends Service {
                         mBluetoothGatt.discoverServices());
 
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                //close();
+                if (mBluetoothGatt == null) {
+                    return;
+                }
+                mBluetoothGatt.disconnect();
+                mBluetoothGatt.close();
+                mReconnectCount++;
                 intentAction = ACTION_GATT_DISCONNECTED;
+                broadcastUpdate(intentAction);
                 mConnectionState = STATE_DISCONNECTED;
                 Log.i(TAG, "Disconnected from GATT server.");
-                broadcastUpdate(intentAction);
+
+                Log.d("mReconnectCount", "" + mReconnectCount);
             }
             if (status == 133) {
                 close();
             }
         }
         public void close() {
-            if (mBluetoothGatt == null) {
-                return;
-            }
             Log.w(TAG, "mBluetoothGatt closed");
             //mBluetoothDeviceAddress = null;
-            mBluetoothGatt.disconnect();
-            mBluetoothGatt.close();
             mBluetoothGatt = null;
-            connect(mBluetoothDeviceAddress);
+            if (mReconnectCount <= 5) {
+                connect(mBluetoothDeviceAddress);
+            }
         }
         /**藉UUID取得Service**/
         @Override

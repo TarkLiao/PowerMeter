@@ -45,7 +45,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.CheckedTextView;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -130,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 宣告App本身介面
      **/
-    private RelativeLayout layout_App;
+    private LinearLayout layout_App;
 
     /**
      * 宣告標籤頁顯示的內容
@@ -242,9 +241,9 @@ public class MainActivity extends AppCompatActivity {
      * Setting Delete列表(checkboxList)
      */
     ListView ListView_Set;
-    ArrayAdapter<String> mAdapterSettingSetResult;
     ListView ListView_SettingDelete;
-    ListAdapter mAdapterSettingDeleteResult;
+    ListSetAdapter mAdapterSettingSetResult;
+    ListDeleteAdapter mAdapterSettingDeleteResult;
 
     /**
      * Bluetooth BLE
@@ -258,7 +257,6 @@ public class MainActivity extends AppCompatActivity {
     private boolean mScanning;
     private boolean mConnected = false;
     private boolean mReseting = false;
-
 
 
     //  搜尋到的BluetoothDevice
@@ -277,7 +275,9 @@ public class MainActivity extends AppCompatActivity {
     private int mScanDeviceNum;
 
     ListView ListView_BLE;
-    ArrayAdapter<String> mAdapterLeScanResult;
+//    ArrayAdapter<String> mAdapterLeScanResult;
+    ListSetAdapter mAdapterLeScanResult;
+
 
     private Handler mHandler;
     private BluetoothLeService mBluetoothLeService;
@@ -303,9 +303,6 @@ public class MainActivity extends AppCompatActivity {
 
     //判斷GPS是否開啟
     private Boolean mGpsOpen = false;
-
-    //開啟APP自動Scan
-    private static Timer AutoScanTimer;
 
     //Toast訊息用，解決訊息會重疊的情況
     private Toast mToast = null;
@@ -341,7 +338,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         /**開啟APP後顯示Logo並等待四秒後關閉**/
         InitAndShowLogo();
 
@@ -412,22 +408,23 @@ public class MainActivity extends AppCompatActivity {
         /**用Adapter設定ListView_BLE需要顯示的內容及模式，根據layout_listitem.xml**/
         //  android.R.layout.simple_list_item_activated_1 只顯示一行文字
         //  mDevice_list    文字顯示的內容
-        mAdapterLeScanResult = new ArrayAdapter<>(this, R.layout.layout_listitem, mDevice_list);
+//        mAdapterLeScanResult = new ArrayAdapter<>(this, R.layout.layout_listitem, mDevice_list);
+        mAdapterLeScanResult = new ListSetAdapter(this, mDevice_list);
         //將Adapter設定至ListView
         ListView_BLE.setAdapter(mAdapterLeScanResult);
         //監聽ListView_BLE的項目
         ListView_BLE.setOnItemClickListener(scanResultOnItemClickListener);
 
         /**用Adapter設定ListView_Set需要顯示的內容及模式，根據layout_listitem.xml**/
-        mAdapterSettingSetResult= new ArrayAdapter<>(this, R.layout.layout_listitem, mList_ScanDeviceName);
-        ListView_Set.setAdapter(mAdapterSettingSetResult);
+        mAdapterSettingSetResult = new ListSetAdapter(this, mList_ScanDeviceName);
         ListView_Set.setOnItemClickListener(SettingSetResultOnItemClickListener);
+        ListView_Set.setAdapter(mAdapterSettingSetResult);
 
         /**監聽ListView的項目**/
         mlist_DeleteCheckbox = new ArrayList<>();
         ListView_SettingDelete.setOnItemClickListener(SettingDeleteResultOnItemClickListener);
         /**用ListAdapter設定ListView_SettingDelete需要顯示的內容及模式**/
-        mAdapterSettingDeleteResult = new ListAdapter(this, mList_ScanDeviceName);
+        mAdapterSettingDeleteResult = new ListDeleteAdapter(this, mList_ScanDeviceName);
         ListView_SettingDelete.setAdapter(mAdapterSettingDeleteResult);
 
         /**監聽Button_Scan，點擊後開始scan device**/
@@ -667,12 +664,13 @@ public class MainActivity extends AppCompatActivity {
      **/
     AdapterView.OnItemClickListener scanResultOnItemClickListener = new AdapterView.OnItemClickListener() {
         int device_index;
-
+        TextView content;
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             //  取得ListView點擊到的項目名稱，並藉由項目名稱去取得List的索引
             //  mDevice_list及mListBluetoothDevice的項目索引值是相同的，所以透過索引值可以直接去取得BluetoothDevice
-            final String device_name = (String) parent.getItemAtPosition(position);
+            content = (TextView) view.findViewById(R.id.check_item_text);
+            final String device_name = content.getText().toString();
             device_index = mDevice_list.indexOf(device_name);
             final BluetoothDevice device = mListBluetoothDevice.get(device_index);
 
@@ -753,9 +751,11 @@ public class MainActivity extends AppCompatActivity {
      **/
     AdapterView.OnItemClickListener SettingSetResultOnItemClickListener = new AdapterView.OnItemClickListener() {
         int index;
+        TextView content;
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            final String device_name = (String) parent.getItemAtPosition(position);
+            content = (TextView) view.findViewById(R.id.check_item_text);
+            final String device_name = content.getText().toString();
             index = mList_ScanDeviceName.indexOf(device_name);
 
             //將該項目的裝置識別及修改名稱填到setting頁面
@@ -1191,18 +1191,16 @@ public class MainActivity extends AppCompatActivity {
 
         TextView Logo_tv = (TextView) findViewById(R.id.Textview_Logo);
         Logo_tv.setTypeface(Typeface.createFromAsset(getAssets(), "fonts/anton.ttf"));
-        Handler StartPicturehandler = new Handler();
-        StartPicturehandler.postDelayed(new Runnable() {
+        Handler StartPictureHandler = new Handler();
+        StartPictureHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 //  過四秒後將圖片刪除
                 Background_Imageview.setVisibility(View.GONE);
                 Layout_Logo.setVisibility(View.GONE);
                 mAppLogoEnd = true;
-
                 //圖片被刪除後，執行自動Scan
-                AutoScanTimer = new Timer(true);
-                AutoScanTimer.schedule(new Task_AutoScan(), 0, 100);
+                AutoScanRun();
             }
         }, 4000);
     }
@@ -1214,7 +1212,7 @@ public class MainActivity extends AppCompatActivity {
 
         //  Main與物件進行連結
         Layout_Main = (RelativeLayout) findViewById(R.id.layout_main);
-        layout_App = (RelativeLayout) findViewById(R.id.layout_app);
+        layout_App = (LinearLayout) findViewById(R.id.layout_app);
 
         //  Display與物件進行連結
         Layout_Display = (RelativeLayout) findViewById(R.id.display_RelativeLayout);
@@ -1701,7 +1699,6 @@ public class MainActivity extends AppCompatActivity {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, RQS_ENABLE_BLUETOOTH);
         } else {
-
             if (Build.VERSION.SDK_INT >= 23) {
                 int location_permission = checkSelfPermission(
                         Manifest.permission.ACCESS_COARSE_LOCATION);
@@ -1742,63 +1739,39 @@ public class MainActivity extends AppCompatActivity {
                                 })
                                 .show();
                     }
+
                 }
             }
         }
         super.onResume();
     }
-
-    /**
-     * 透過handle 處理自動Scan的行為
-     **/
-    class Task_AutoScan extends TimerTask {
-        public void run() {
-            AutoScanHandle.sendEmptyMessage(0);
-        }
-    }
-
-    /**
-     * 當Bluetooth開啟、GPS開啟、未連線且LOGO結束，自動進行Scan
-     **/
-    private Handler AutoScanHandle = new Handler() {
-        Boolean Bluetooth;
-        public void handleMessage(Message msg) {
-            Bluetooth = mBluetoothAdapter.isEnabled();
-            if (mList_ScanDeviceMac.size() > 0) {
-                if (Build.VERSION.SDK_INT >= 23) {
-                    if (Bluetooth && mGpsOpen && !mConnected && mAppLogoEnd) {
-                        AutoScanTimer.cancel();
-                        AutoScanTimer = null;
-                        Layout_Display.removeAllViews();
-                        Layout_Display.addView(View_Scan);
-                        scanLeDevice(Bluetooth);
-                    }
-                } else {
-                    if (Bluetooth && !mConnected && mAppLogoEnd) {
-                        AutoScanTimer.cancel();
-                        AutoScanTimer = null;
-                        Layout_Display.removeAllViews();
-                        Layout_Display.addView(View_Scan);
-
-                        mScanning = false;
-                        Imageview_scan.setVisibility(View.INVISIBLE);
-                        AnimationDrawable.stop();
-
-                        mHandler.postDelayed(ScanTimeRun, SCAN_PERIOD);
-                        mTimerScan = new Timer(true);
-                        //5.0.2須不斷Scan才能掃到裝置
-                        mTimerScan.schedule(new Task_ScanContinued(), 0, 250);
-                    }
+    private void AutoScanRun() {
+        Boolean Bluetooth = mBluetoothAdapter.isEnabled();
+        if (mList_ScanDeviceMac.size() > 0) {
+            if (Build.VERSION.SDK_INT >= 23) {
+                if (Bluetooth && mGpsOpen && !mConnected && mAppLogoEnd) {
+                    Layout_Display.removeAllViews();
+                    Layout_Display.addView(View_Scan);
+                    scanLeDevice(Bluetooth);
                 }
             } else {
-                AutoScanTimer.cancel();
-                AutoScanTimer = null;
-                Layout_Display.removeAllViews();
-                Layout_Display.addView(View_SettingMenu);
+                if (Bluetooth && !mConnected && mAppLogoEnd) {
+                    Layout_Display.removeAllViews();
+                    Layout_Display.addView(View_Scan);
+
+                    mScanning = false;
+
+                    mHandler.postDelayed(ScanTimeRun, SCAN_PERIOD);
+                    mTimerScan = new Timer(true);
+                    //5.0.2須不斷Scan才能掃到裝置
+                    mTimerScan.schedule(new Task_ScanContinued(), 0, 250);
+                }
             }
-            super.handleMessage(msg);
+        } else {
+            Layout_Display.removeAllViews();
+            Layout_Display.addView(View_SettingMenu);
         }
-    };
+    }
 
     /**
      * 透過handle，處理持續Scan的行為(5.0.2)
@@ -1872,6 +1845,7 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == RQS_ENABLE_BLUETOOTH) {
 
             if(resultCode == Activity.RESULT_CANCELED) {
+                Toast.makeText(this, "resultCode == Activity.RESULT_CANCELED", Toast.LENGTH_SHORT).show();
                 finish();
                 return;
             }
@@ -2117,6 +2091,7 @@ public class MainActivity extends AppCompatActivity {
             action = intent.getAction();
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
                 mConnected = true;
+                mBluetoothLeService.mReconnectCount = 0;
                 Layout_Display.removeAllViews();
                 if (isPage30A) {
                     Log.d("check", "Connect:30A");
@@ -2137,9 +2112,13 @@ public class MainActivity extends AppCompatActivity {
                     mNotifiyManager.cancel(1);
                 }
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
+                if (mConnected) {//斷線重連
+                    ConnectDevice(mDeviceAddress);
+                    Log.d("test", "connect Protocol");
+                }
                 mConnected = false;
                 mCurrentConnect = "Empty";
-                Log.d("Paul", "Connect Fail");
+
                 if (mToast == null) {
                     mToast = Toast.makeText(MainActivity.this, mConnectDeviceName + " disconnected", Toast.LENGTH_SHORT);
                 } else {
@@ -2147,6 +2126,8 @@ public class MainActivity extends AppCompatActivity {
                 }
                 SystemNotification(1, "Device", mConnectDeviceName + " disconnected");
                 mToast.show();
+                Log.d("test", "Connect Fail");
+
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
@@ -2566,6 +2547,9 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(BluetoothLeService.TAG, "Connect request result=" + result);
             } else if (mBluetoothLeService.mBluetoothGatt != null && DeviceAddress.equals(mBluetoothLeService.mBluetoothDeviceAddress)) {
                 //  如果連接的裝置跟上次相同，則重連
+                final boolean result = mBluetoothLeService.connect(DeviceAddress);
+                Log.d(BluetoothLeService.TAG, "Connect request result=" + result);
+            } else if (mBluetoothLeService.mBluetoothGatt == null) {
                 final boolean result = mBluetoothLeService.connect(DeviceAddress);
                 Log.d(BluetoothLeService.TAG, "Connect request result=" + result);
             }

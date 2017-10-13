@@ -6,18 +6,22 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.CheckedTextView;
+import android.widget.TextView;
 
 import java.util.List;
 
-public class ListAdapter extends BaseAdapter
+/**
+ * Created by Tark on 2017/10/12.
+ */
+
+public class ListSetAdapter  extends BaseAdapter
 {
     private Activity activity;
     private List<String> mList;
 
     private static LayoutInflater inflater = null;
 
-    public ListAdapter(Activity a, List<String> list)
+    public ListSetAdapter(Activity a, List<String> list)
     {
         activity = a;
         mList = list;
@@ -44,13 +48,11 @@ public class ListAdapter extends BaseAdapter
         View vi = convertView;
         if(convertView==null)
         {
-            vi = inflater.inflate(R.layout.layout_allow_device, null);
+            vi = inflater.inflate(R.layout.layout_settingset_item, null);
         }
 
-        CheckedTextView chkBshow = (CheckedTextView) vi.findViewById(R.id.check_delete_device);
-
-        chkBshow.setText(mList.get(position).toString());
-        chkBshow.setChecked(false);
+        TextView chkConent = (TextView) vi.findViewById(R.id.check_item_text);
+        chkConent.setText(mList.get(position).toString());
         return vi;
     }
 }
