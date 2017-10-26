@@ -1283,10 +1283,10 @@ public class MainActivity extends AppCompatActivity {
             Textview_connected = (TextView) View_Value_50A.findViewById(R.id.textview_connected_50A);
             LedText_Value_Energy_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Energy_30a);
             LedText_Value_Watt_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Watt_30a);
-            LedText_Value_Volt_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Volt_30a);
-            LedText_Value_Amp_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Amp_30a);
-            LedText_Value_Volt_50A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Volt_50a);
-            LedText_Value_Amp_50A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Amp_50a);
+            LedText_Value_Volt_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Volt_50a);
+            LedText_Value_Amp_30A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Amp_50a);
+            LedText_Value_Volt_50A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Volt_30a);
+            LedText_Value_Amp_50A = (LedTextView) View_Value_50A.findViewById(R.id.Textview_Value_Amp_30a);
         }
         Button_Reset.setOnClickListener(null);
         Button_Reset.setOnClickListener(new View.OnClickListener() {
