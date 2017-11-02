@@ -83,6 +83,8 @@ public class MainActivity extends AppCompatActivity {
     private final int MAX_AMP = 50;
     private final int MIN_VALUE = 0;
 
+    private int mClearValue = 0;
+
     /**
      * 宣告各Button
      **/
@@ -2112,12 +2114,35 @@ public class MainActivity extends AppCompatActivity {
                     mNotifiyManager.cancel(1);
                 }
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
+
+                if (isPage30A) {
+                    mClearValue = 0;
+                    mValue_Volt_30A = 0;
+                    mValue_Amp_30A = 0;
+                    Value_Watt_30A = 0;
+                    Value_Energy_30A = 0;
+                    mValue_Watt = 0;
+                    mValue_Energy = 0;
+                } else {
+                    mClearValue = 0;
+                    mValue_Volt_30A = 0;
+                    mValue_Amp_30A = 0;
+                    Value_Watt_30A = 0;
+                    Value_Energy_30A = 0;
+                    mValue_Volt_50A = 0;
+                    mValue_Amp_50A = 0;
+                    Value_Watt_50A = 0;
+                    Value_Energy_50A = 0;
+                    mValue_Watt = 0;
+                    mValue_Energy = 0;
+                }
+                mConnected = false;
+                mCurrentConnect = "Empty";
+                ValueMonitor();
                 if (mConnected) {//斷線重連
                     ConnectDevice(mDeviceAddress);
                     Log.d("test", "connect Protocol");
                 }
-                mConnected = false;
-                mCurrentConnect = "Empty";
 
                 if (mToast == null) {
                     mToast = Toast.makeText(MainActivity.this, mConnectDeviceName + " disconnected", Toast.LENGTH_SHORT);
@@ -2232,7 +2257,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
-        Textview_connected.setText(mCurrentConnect);
+
         ValueMonitor();
     }
 
@@ -2242,11 +2267,13 @@ public class MainActivity extends AppCompatActivity {
     private void Decode_data(byte[] data, int channel) {
 
         if (channel == 0) {
+            mClearValue++;
             mValue_Volt_30A = Byte42double(data, 3) / 10000;
             mValue_Amp_30A = Byte42double(data, 7) / 10000;
             Value_Watt_30A = Byte42double(data, 11) / 10000;
             Value_Energy_30A = Byte42double(data, 15) / 10000;
         } else {
+            mClearValue--;
             mValue_Volt_50A = Byte42double(data, 3) / 10000;
             mValue_Amp_50A = Byte42double(data, 7) / 10000;
             Value_Watt_50A = Byte42double(data, 11) / 10000;
@@ -2254,9 +2281,23 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (isPage30A) {
+            mClearValue = 0;
             mValue_Watt = Value_Watt_30A;
             mValue_Energy = Value_Energy_30A;
         } else {
+            if (mClearValue > 1) {
+                mClearValue = 0;
+                mValue_Volt_50A = 0;
+                mValue_Amp_50A = 0;
+                Value_Watt_50A = 0;
+                Value_Energy_50A = 0;
+            } else if (mClearValue < -1) {
+                mClearValue = 0;
+                mValue_Volt_30A = 0;
+                mValue_Amp_30A = 0;
+                Value_Watt_30A = 0;
+                Value_Energy_30A = 0;
+            }
             mValue_Watt = Value_Watt_30A + Value_Watt_50A;
             mValue_Energy = Value_Energy_30A + Value_Energy_50A;
         }
@@ -2267,6 +2308,7 @@ public class MainActivity extends AppCompatActivity {
      *  顯示並監測數據是否Over
      * */
     private void ValueMonitor () {
+        Textview_connected.setText(mCurrentConnect);
         int NotifiyId;
         String Tmp_Max;
         String Tmp_Min;
