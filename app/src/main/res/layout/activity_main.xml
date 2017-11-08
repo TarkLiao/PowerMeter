@@ -46,7 +46,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/layout_main">
-
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentTop="true"
+            android:layout_centerInParent="true"
+            app:srcCompat="@drawable/backgroundimage"
+            android:scaleType="fitXY"/>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"

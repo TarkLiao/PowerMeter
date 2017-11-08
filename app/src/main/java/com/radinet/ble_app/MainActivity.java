@@ -521,7 +521,6 @@ public class MainActivity extends AppCompatActivity {
                         timer.cancel();
                         timer.purge();
                         timer = null;
-                        SaveSetting();
                     }
                     break;
 
@@ -533,7 +532,6 @@ public class MainActivity extends AppCompatActivity {
                         timer.cancel();
                         timer.purge();
                         timer = null;
-                        SaveSetting();
                     }
                     break;
             }
@@ -882,6 +880,7 @@ public class MainActivity extends AppCompatActivity {
                 } else if (EditText_Device_Name.getText().toString().isEmpty()) {
                     EditText_Device_Name.requestFocus();
                 }
+                SaveSetting();
             }
         });
 
