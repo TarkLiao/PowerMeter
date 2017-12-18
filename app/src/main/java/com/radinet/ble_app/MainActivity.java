@@ -44,6 +44,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.CheckedTextView;
 import android.widget.EditText;
@@ -106,6 +107,8 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton Button_Reset;
     private ImageButton Button_Apply;
     private ImageButton Button_App_Update;
+    private ImageButton Button_Help;
+    private ImageButton Button_Menu_Help;
 
     /**
      * 判定Reset後Device沒反應時的處理
@@ -259,6 +262,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean mScanning;
     private boolean mConnected = false;
     private boolean mReseting = false;
+    private boolean mReseted = false;
 
 
     //  搜尋到的BluetoothDevice
@@ -389,6 +393,7 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this,
                     "BLUETOOTH_LE not supported in this device!",
                     Toast.LENGTH_SHORT).show();
+            android.os.Process.killProcess(android.os.Process.myPid());
             finish();
         }
 
@@ -434,8 +439,7 @@ public class MainActivity extends AppCompatActivity {
             int i;
             @Override
             public void onClick(View v) {
-                Layout_Display.removeAllViews();
-                Layout_Display.addView(View_Scan);
+                SetAppView(View_Scan);
                 /**進行scan device**/
                 if (Build.VERSION.SDK_INT >= 23) {
                     scanLeDevice(mBluetoothAdapter.isEnabled());
@@ -472,18 +476,15 @@ public class MainActivity extends AppCompatActivity {
         public void onClick(View v) {
             switch (v.getId()) {
                 case R.id.Button_Value:
-                    //  先清除所有View
-                    Layout_Display.removeAllViews();
                     if (isPage30A) {
-                        Layout_Display.addView(View_Value_30A);
+                        SetAppView(View_Value_30A);
                     } else {
-                        Layout_Display.addView(View_Value_50A);
+                        SetAppView(View_Value_50A);
                     }
                     break;
                 case R.id.Button_Setting:
                     //  先清除所有View
-                    Layout_Display.removeAllViews();
-                    Layout_Display.addView(View_SettingMenu);
+                    SetAppView(View_SettingMenu);
                     break;
             }
         }
@@ -706,11 +707,10 @@ public class MainActivity extends AppCompatActivity {
 
                             //  如果連線狀態且連接與選擇的是相同Device，則直接跳到value page，且顯示裝置已連線
                             if (mConnected && device.equals(mBluetoothDevice)) {
-                                Layout_Display.removeAllViews();
                                 if (isPage30A) {
-                                    Layout_Display.addView(View_Value_30A);
+                                    SetAppView(View_Value_30A);
                                 } else {
-                                    Layout_Display.addView(View_Value_50A);
+                                    SetAppView(View_Value_50A);
                                 }
                                 if (mToast == null) {
                                     mToast = Toast.makeText(MainActivity.this, mConnectDeviceName + " connected", Toast.LENGTH_SHORT);
@@ -773,8 +773,7 @@ public class MainActivity extends AppCompatActivity {
 
             //因為是settingSet，不一定要修改名稱，所以不focus EditText_Device_Name
             EditText_Device_Name.clearFocus();
-            Layout_Display.removeAllViews();
-            Layout_Display.addView(View_Setting);
+            SetAppView(View_Setting);
         }
     };
 
@@ -818,6 +817,16 @@ public class MainActivity extends AppCompatActivity {
         }
         return super.onKeyDown(keyCode, event);
     }
+
+    public void SetAppView(View v) {
+        Layout_Display.removeAllViews();
+        if (v == View_SettingMenu) {
+            Button_Help.setVisibility(View.INVISIBLE);
+        } else {
+            Button_Help.setVisibility(View.VISIBLE);
+        }
+        Layout_Display.addView(v);
+    }
     /**
      * 監聽Setting Page "Add" "Set" "Delete" Button的作用
      * 監聽Apply及Delete Button的作用
@@ -851,6 +860,8 @@ public class MainActivity extends AppCompatActivity {
             int index;
             @Override
             public void onClick(View v) {
+                final InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(EditText_Device_Name.getWindowToken(), 0);
                 EditText_Device_Name.clearFocus();
                 if (!EditText_Device_Name.getText().toString().isEmpty()) {
                     if (!mList_ScanDeviceMac.contains(NightbunMac(TextView_Mac.getText().toString()))) {
@@ -874,8 +885,7 @@ public class MainActivity extends AppCompatActivity {
                         mConnectDeviceName = mList_ScanDeviceName.get(mList_ScanDeviceMac.indexOf(NightbunMac(TextView_Mac.getText().toString())));
                         mCurrentConnect = mConnectDeviceName;
                     }
-                    Layout_Display.removeAllViews();
-                    Layout_Display.addView(View_SettingSet);
+                    SetAppView(View_SettingSet);
                     ListView_Set.invalidateViews();
                 } else if (EditText_Device_Name.getText().toString().isEmpty()) {
                     EditText_Device_Name.requestFocus();
@@ -887,8 +897,7 @@ public class MainActivity extends AppCompatActivity {
         Button_Setting_Set.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Layout_Display.removeAllViews();
-                Layout_Display.addView(View_SettingSet);
+                SetAppView(View_SettingSet);
                 ListView_Set.invalidateViews();
             }
         });
@@ -896,8 +905,7 @@ public class MainActivity extends AppCompatActivity {
         Button_Setting_Delete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Layout_Display.removeAllViews();
-                Layout_Display.addView(View_SettingDelete);
+                SetAppView(View_SettingDelete);
                 ListView_SettingDelete.invalidateViews();
             }
         });
@@ -924,8 +932,7 @@ public class MainActivity extends AppCompatActivity {
                                         mList_ScanDeviceName.remove(i);
                                         mList_ScanDeviceMac.remove(i);
                                         mList_ScanDeviceType.remove(i);
-                                        Layout_Display.removeAllViews();
-                                        Layout_Display.addView(View_SettingDelete);
+                                        SetAppView(View_SettingDelete);
                                         ListView_SettingDelete.invalidateViews();
                                     }
                                 }
@@ -953,16 +960,16 @@ public class MainActivity extends AppCompatActivity {
                         .setNeutralButton("Go", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                            final String appPackageName = "com.radinet.ble_app"; // getPackageName() from Context or Activity object
-                            try {
-                                startActivity(new Intent(Intent.ACTION_VIEW,
-                                        Uri.parse("https://play.google.com/store")));
-//                                startActivity(new Intent(Intent.ACTION_VIEW,
-//                                        Uri.parse("market://details?id=" + appPackageName)));
-                            } catch (android.content.ActivityNotFoundException e) {
-                                startActivity(new Intent(Intent.ACTION_VIEW,
-                                        Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)));
-                            }
+                                final String appPackageName = "com.radinet.ble_app"; // getPackageName() from Context or Activity object
+                                try {
+    //                                startActivity(new Intent(Intent.ACTION_VIEW,
+    //                                        Uri.parse("https://play.google.com/store")));
+                                    startActivity(new Intent(Intent.ACTION_VIEW,
+                                            Uri.parse("market://details?id=" + appPackageName)));
+                                } catch (android.content.ActivityNotFoundException e) {
+                                    startActivity(new Intent(Intent.ACTION_VIEW,
+                                            Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)));
+                                }
                             }
                         })
                         .show();
@@ -1043,6 +1050,7 @@ public class MainActivity extends AppCompatActivity {
                     .setPositiveButton("ok", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
+                            android.os.Process.killProcess(android.os.Process.myPid());
                             finish();
                         }
                     })
@@ -1075,8 +1083,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         TextView_Mac.setText(QrCodeResult);
-        Layout_Display.removeAllViews();
-        Layout_Display.addView(View_Setting);
+        SetAppView(View_Setting);
         EditText_Device_Name.setText("");
         EditText_Device_Name.requestFocus();
     }
@@ -1252,7 +1259,8 @@ public class MainActivity extends AppCompatActivity {
         Button_Delete = (ImageButton) View_SettingDelete.findViewById(R.id.Button_Delete);
         Button_App_Update = (ImageButton) View_SettingMenu.findViewById(R.id.Button_App_Update);
         Button_Apply = (ImageButton) View_Setting.findViewById(R.id.Button_apply);
-
+        Button_Help = (ImageButton) findViewById(R.id.Button_Help);
+        Button_Menu_Help = (ImageButton) View_SettingMenu.findViewById(R.id.Button_Help);
 
         //  LedTextView與物件做連結
         LedText_Limit_Energy_Max = (LedTextView) View_Setting.findViewById(R.id.Textview_Energy_Max);
@@ -1267,6 +1275,11 @@ public class MainActivity extends AppCompatActivity {
 
         //  ImageView與物件做連結
         Imageview_scan = (ImageView)View_Scan.findViewById(R.id.Imageview_animation);
+
+        TextView tv_30a = (TextView) View_Value_30A.findViewById(R.id.tv_watchdog_30a);
+        tv_30a.setTypeface(Typeface.createFromAsset(getAssets(), "fonts/anton.ttf"));
+        TextView tv_50a = (TextView) View_Value_50A.findViewById(R.id.tv_watchdog_50a);
+        tv_50a.setTypeface(Typeface.createFromAsset(getAssets(), "fonts/anton.ttf"));
     }
     /**
      * 將宣告與物件做連結，監聽Button_Reset的作用
@@ -1324,6 +1337,18 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }, 8000);
                 }
+            }
+        });
+        Button_Help.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+        Button_Menu_Help.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
             }
         });
     }
@@ -1676,6 +1701,7 @@ public class MainActivity extends AppCompatActivity {
             //  取得mBluetoothManager 及 mBluetoothAdapter
             if (!mBluetoothLeService.initialize()) {
                 Log.e("Paul", "Unable to initialize Bluetooth");
+                android.os.Process.killProcess(android.os.Process.myPid());
                 finish();
             }
             // Automatically connects to the device upon successful start-up initialization.
@@ -1726,6 +1752,7 @@ public class MainActivity extends AppCompatActivity {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         Toast.makeText(MainActivity.this, "Gps is disable", Toast.LENGTH_SHORT).show();
+                                        android.os.Process.killProcess(android.os.Process.myPid());
                                         finish();
                                     }
                                 })
@@ -1751,14 +1778,12 @@ public class MainActivity extends AppCompatActivity {
         if (mList_ScanDeviceMac.size() > 0) {
             if (Build.VERSION.SDK_INT >= 23) {
                 if (Bluetooth && mGpsOpen && !mConnected && mAppLogoEnd) {
-                    Layout_Display.removeAllViews();
-                    Layout_Display.addView(View_Scan);
+                    SetAppView(View_Scan);
                     scanLeDevice(Bluetooth);
                 }
             } else {
                 if (Bluetooth && !mConnected && mAppLogoEnd) {
-                    Layout_Display.removeAllViews();
-                    Layout_Display.addView(View_Scan);
+                    SetAppView(View_Scan);
 
                     mScanning = false;
 
@@ -1769,8 +1794,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         } else {
-            Layout_Display.removeAllViews();
-            Layout_Display.addView(View_SettingMenu);
+            SetAppView(View_SettingMenu);
         }
     }
 
@@ -1847,6 +1871,7 @@ public class MainActivity extends AppCompatActivity {
 
             if(resultCode == Activity.RESULT_CANCELED) {
                 Toast.makeText(this, "resultCode == Activity.RESULT_CANCELED", Toast.LENGTH_SHORT).show();
+                android.os.Process.killProcess(android.os.Process.myPid());
                 finish();
                 return;
             }
@@ -1856,6 +1881,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (mBluetoothLeScanner == null) {
                 Toast.makeText(this, "mBluetoothLeScanner==null", Toast.LENGTH_SHORT).show();
+                android.os.Process.killProcess(android.os.Process.myPid());
                 finish();
                 return;
             }
@@ -1875,6 +1901,7 @@ public class MainActivity extends AppCompatActivity {
                     //取得權限
                 } else {
                     //使用者拒絕權限
+                    android.os.Process.killProcess(android.os.Process.myPid());
                     finish();
                 }
                 break;
@@ -1901,6 +1928,7 @@ public class MainActivity extends AppCompatActivity {
         mBluetoothAdapter = bluetoothManager.getAdapter();
         if (mBluetoothAdapter == null) {
             Toast.makeText(this, "mBluetoothAdapter == Null", Toast.LENGTH_SHORT).show();
+            android.os.Process.killProcess(android.os.Process.myPid());
             finish();
         } else {
             mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
@@ -2093,13 +2121,12 @@ public class MainActivity extends AppCompatActivity {
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
                 mConnected = true;
                 mBluetoothLeService.mReconnectCount = 0;
-                Layout_Display.removeAllViews();
                 if (isPage30A) {
                     Log.d("check", "Connect:30A");
-                    Layout_Display.addView(View_Value_30A);
+                    SetAppView(View_Value_30A);
                 } else {
                     Log.d("check", "Connect:50A");
-                    Layout_Display.addView(View_Value_50A);
+                    SetAppView(View_Value_50A);
                 }
                 mCurrentConnect = mConnectDeviceName;
                 Log.d("Paul", "Connected");
@@ -2184,6 +2211,7 @@ public class MainActivity extends AppCompatActivity {
             if (Data.length == 5) {
                 //取的資料RESEt則代表成功送reset指令
                 if (Data[0] == 'R' && Data[1] == 'E' && Data[2] == 'S' && Data[3] == 'E' && Data[4] == 'T') {
+                    mReseted = true;
                     if (mToast == null) {
                         mToast = Toast.makeText(MainActivity.this, "Resetting", Toast.LENGTH_LONG);
                     } else {
@@ -2193,10 +2221,13 @@ public class MainActivity extends AppCompatActivity {
                 }
                 return;
             }
+        }
+        if (mReseted && Data != null) {
             if (isPage30A) {//30A判斷值是否歸零
                 if (Data.length == 20 && Data[0] == 0x01 && Data[1] == 0x03 && Data[2] == 0x20 &&
                         Data[15] == 0x00 && Data[16] == 0x00 && Data[17] == 0x00 && Data[18] == 0x00) {
                     mReseting = false;
+                    mReseted = false;
                     if (mToast == null) {
                         mToast = Toast.makeText(MainActivity.this, "Reset success", Toast.LENGTH_LONG);
                     } else {
@@ -2223,6 +2254,7 @@ public class MainActivity extends AppCompatActivity {
                 //50A需要確認channel0跟1都歸零
                 if (mChannel0 && mChannel1) {
                     mReseting = false;
+                    mReseted = false;
                     mChannel0 = false;
                     mChannel1 = false;
                     if (mToast == null) {
@@ -2285,12 +2317,14 @@ public class MainActivity extends AppCompatActivity {
             mValue_Energy = Value_Energy_30A;
         } else {
             if (mClearValue > 1) {
+                mChannel1 = true;
                 mClearValue = 0;
                 mValue_Volt_50A = 0;
                 mValue_Amp_50A = 0;
                 Value_Watt_50A = 0;
                 Value_Energy_50A = 0;
             } else if (mClearValue < -1) {
+                mChannel0 = true;
                 mClearValue = 0;
                 mValue_Volt_30A = 0;
                 mValue_Amp_30A = 0;

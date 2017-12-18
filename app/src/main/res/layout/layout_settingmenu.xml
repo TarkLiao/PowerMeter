@@ -9,60 +9,118 @@
         android:orientation="vertical"
         android:gravity="center">
         <TextView
-            android:id="@+id/padding1"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_weight="0.1" />
-
-        <ImageButton
-            android:id="@+id/Button_Scan_Add"
+            android:layout_weight="1" />
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:background="@null"
-            android:scaleType="fitCenter"
-            app:srcCompat="@drawable/scan_device_add" />
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+            <ImageButton
+                android:id="@+id/Button_Scan_Add"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@null"
+                android:scaleType="fitCenter"
+                app:srcCompat="@drawable/scan_device_add" />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="0.8" />
+            <ImageButton
+                android:id="@+id/Button_Scan_Delete"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@null"
+                android:scaleType="fitCenter"
+                app:srcCompat="@drawable/scan_device_delete" />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+
         <TextView
-            android:id="@+id/padding2"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="0.3" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+            <ImageButton
+                android:id="@+id/Button_Scan_Set"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@null"
+                android:scaleType="fitCenter"
+                app:srcCompat="@drawable/scan_device_set" />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="0.8" />
+            <ImageButton
+                android:id="@+id/Button_App_Update"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@null"
+                android:scaleType="fitCenter"
+                app:srcCompat="@drawable/app_update" />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+
+        <TextView
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_weight="0.3" />
 
-        <ImageButton
-            android:id="@+id/Button_Scan_Set"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:background="@null"
-            android:scaleType="fitCenter"
-            app:srcCompat="@drawable/scan_device_set" />
-        <TextView
-            android:id="@+id/padding3"
-            android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_weight="0.3" />
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="2" />
+            <ImageButton
+                android:id="@+id/Button_Help"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@null"
+                android:scaleType="fitCenter"
+                app:srcCompat="@drawable/help" />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="2" />
+        </LinearLayout>
 
-        <ImageButton
-            android:id="@+id/Button_Scan_Delete"
-            android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:background="@null"
-            android:scaleType="fitCenter"
-            app:srcCompat="@drawable/scan_device_delete" />
         <TextView
-            android:id="@+id/padding4"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_weight="0.3" />
-        <ImageButton
-            android:id="@+id/Button_App_Update"
-            android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:background="@null"
-            android:scaleType="fitCenter"
-            app:srcCompat="@drawable/app_update" />
-        <TextView
-            android:id="@+id/padding5"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="3" />
+            android:layout_weight="1" />
     </LinearLayout>
 </RelativeLayout>

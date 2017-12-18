@@ -12,12 +12,11 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center">
+            android:gravity="top">
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="2" />
-
             <TextView
                 android:id="@+id/tv_watchdog_50a"
                 android:layout_width="wrap_content"
@@ -36,8 +35,9 @@
 
             <ImageButton
                 android:id="@+id/Button_Reset_50A"
-                android:layout_width="100dp"
-                android:layout_height="40dp"
+                android:layout_marginTop="20dp"
+                android:layout_width="90dp"
+                android:layout_height="70dp"
                 app:srcCompat="@drawable/reset"
                 android:scaleType="fitXY"
                 android:background="@null"/>
@@ -45,6 +45,7 @@
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="2" />
+
         </LinearLayout>
         <!-- -->
         <LinearLayout
@@ -63,7 +64,7 @@
                 android:text="Connect"
                 android:textColor="@color/Color_Black"
                 android:textSize="20sp"
-                android:textStyle="bold" />
+                android:textStyle="bold|italic" />
 
             <TextView
                 android:layout_width="0dp"
@@ -73,10 +74,11 @@
                 android:id="@+id/textview_connected_50A"
                 android:layout_width="180dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:text="Empty"
                 android:textColor="@color/Color_Black"
                 android:textSize="20sp"
-                android:textStyle="bold" />
+                android:textStyle="bold|italic" />
 
 
             <TextView
@@ -93,26 +95,30 @@
             android:id="@+id/linearLayout_30a"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_alignParentStart="true">
+            android:gravity="center">
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_weight="3" />
-
-            <TextView
-                android:id="@+id/tv_energy_30a"
-                android:layout_width="95dp"
+            <LinearLayout
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/shape"
                 android:gravity="center"
-                android:paddingTop="3dp"
-                android:paddingBottom="3dp"
-                android:text="@string/Title_Energy"
-                android:textColor="@color/Color_White"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/tv_energy_30a"
+                    android:layout_width="95dp"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/shape"
+                    android:gravity="center"
+                    android:paddingTop="3dp"
+                    android:paddingBottom="3dp"
+                    android:text="@string/Title_Energy"
+                    android:textColor="@color/Color_White"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="0dp"
