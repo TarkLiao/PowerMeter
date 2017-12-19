@@ -348,7 +348,7 @@ public class MainActivity extends AppCompatActivity {
         InitAndShowLogo();
 
         /**設定顯示30介面**/
-        isPage30A = true;
+        isPage30A = false;
 
         /**將宣告與Common物件做連結**/
         LinkObjectCommon();

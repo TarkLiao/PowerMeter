@@ -63,14 +63,14 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="3"
+                android:layout_weight="2.5"
                 android:orientation="vertical"
                 android:gravity="center"
                 android:layout_gravity="center">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
-                    android:layout_weight="1"
+                    android:layout_weight="0.75"
                     android:orientation="horizontal">
                     <TextView
                         android:layout_width="0dp"
@@ -152,7 +152,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="1.5">
+                android:layout_weight="1.2">
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="0dp"
@@ -162,19 +162,11 @@
                     android:layout_height="match_parent"
                     android:layout_weight="2"
                     android:orientation="vertical">
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="0dp"
-                        android:layout_weight="1" />
                     <ImageView
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
                         android:layout_weight="1"
                         app:srcCompat="@drawable/logo_bottom"/>
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="0dp"
-                        android:layout_weight="0.1" />
                 </LinearLayout>
 
                 <TextView
@@ -185,7 +177,7 @@
                     android:id="@+id/Button_Help"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="0.5"
+                    android:layout_weight="0.4"
                     android:background="@null"
                     android:scaleType="fitCenter"
                     app:srcCompat="@drawable/help"/>

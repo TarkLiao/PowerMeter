@@ -12,7 +12,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="top">
+            android:gravity="center_vertical">
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="0dp"
@@ -22,7 +22,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true"
                 android:gravity="center"
                 android:text="Power Watchdog\n50 Amp Service"
                 android:textColor="@color/Color_Red"
@@ -35,9 +34,9 @@
 
             <ImageButton
                 android:id="@+id/Button_Reset_50A"
-                android:layout_marginTop="20dp"
-                android:layout_width="90dp"
-                android:layout_height="70dp"
+                android:layout_width="80dp"
+                android:layout_height="60dp"
+                android:layout_alignParentTop="true"
                 app:srcCompat="@drawable/reset"
                 android:scaleType="fitXY"
                 android:background="@null"/>
@@ -304,9 +303,9 @@
                         android:layout_width="100dp"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
+                        android:background="@drawable/shape"
                         android:ellipsize="end"
                         android:gravity="center"
-                        android:background="@drawable/shape"
                         android:text="000"
                         android:textColor="@color/Color_White"
                         android:textSize="40sp" />
@@ -326,15 +325,13 @@
                         android:textSize="20sp"
                         android:textStyle="bold" />
                 </LinearLayout>
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="0.1" />
+
 
                 <LinearLayout
                     android:id="@+id/linearLayout_test2"
                     android:layout_width="200dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
                     android:gravity="center"
                     android:layout_weight="4">
 
@@ -483,15 +480,11 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="0.1" />
-
                 <LinearLayout
                     android:id="@+id/linearLayout_test5"
                     android:layout_width="200dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
                     android:gravity="center"
                     android:layout_weight="4">
 
