@@ -130,9 +130,9 @@ public class BluetoothLeService extends Service {
             Log.w(TAG, "mBluetoothGatt closed");
             //mBluetoothDeviceAddress = null;
             mBluetoothGatt = null;
-            if (mReconnectCount <= 5) {
+//            if (mReconnectCount <= 5) {
                 connect(mBluetoothDeviceAddress);
-            }
+//            }
         }
         /**藉UUID取得Service**/
         @Override

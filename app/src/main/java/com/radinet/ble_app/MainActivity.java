@@ -109,6 +109,9 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton Button_App_Update;
     private ImageButton Button_Help;
     private ImageButton Button_Menu_Help;
+    private ImageButton Button_Init_Setup;
+    private ImageButton Button_Set_Notification;
+    private ImageButton Button_Replace_Surge;
 
     /**
      * 判定Reset後Device沒反應時的處理
@@ -153,6 +156,10 @@ public class MainActivity extends AppCompatActivity {
     private View View_SettingSet;
     private View View_SettingMenu;
     private View View_Qrcode;
+    private View View_Help;
+    private View View_InitSetup;
+
+    private boolean OpenHelp;
 
     /**
      * BLE一次傳20byte，共40byte，所以前20byte會先取得Value，後20byte判斷channel0或1，所以先將Value做儲存
@@ -464,7 +471,6 @@ public class MainActivity extends AppCompatActivity {
 
         /**監聽Setting Page "Add" "Set" "Delete" Button的作用**/
         ScanDeviceMenu();
-
     }
 
     /**↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓物件行為↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓**/
@@ -804,6 +810,11 @@ public class MainActivity extends AppCompatActivity {
                     QrcodeStopScan();
                     return super.onKeyDown(0, null);
                 }
+            } else if (OpenHelp) {
+                Layout_Main.removeAllViews();
+                Layout_Main.addView(layout_App);
+                OpenHelp = false;
+                return super.onKeyDown(0, null);
             } else {
                 // Show home screen when pressing "back" button,
                 //  so that this app won't be closed accidentally
@@ -1211,8 +1222,12 @@ public class MainActivity extends AppCompatActivity {
                 AutoScanRun();
             }
         }, 4000);
+        //https://play.google.com/store/apps/details?id=com.radinet.ble_app
+        CheckVersion();
     }
+    private void CheckVersion() {
 
+    }
     /**
      * 將宣告與物件做連結
      **/
@@ -1234,7 +1249,9 @@ public class MainActivity extends AppCompatActivity {
         View_SettingDelete = layoutInflater.inflate(R.layout.layout_settingdelete, null);
         View_SettingMenu = layoutInflater.inflate(R.layout.layout_settingmenu, null);
         View_SettingSet = layoutInflater.inflate(R.layout.layout_settingset, null);
-        View_Qrcode = layoutInflater.inflate(R.layout.layout_qr_scan , null);
+        View_Qrcode = layoutInflater.inflate(R.layout.layout_qr_scan, null);
+        View_Help = layoutInflater.inflate(R.layout.layout_helpmenu, null);
+        View_InitSetup = layoutInflater.inflate(R.layout.layout_initial_setup, null);
 
         // Setting介面物件連結
         EditText_Device_Name = (EditText) View_Setting.findViewById(R.id.EditText_Device_Name);
@@ -1261,6 +1278,9 @@ public class MainActivity extends AppCompatActivity {
         Button_Apply = (ImageButton) View_Setting.findViewById(R.id.Button_apply);
         Button_Help = (ImageButton) findViewById(R.id.Button_Help);
         Button_Menu_Help = (ImageButton) View_SettingMenu.findViewById(R.id.Button_Help);
+        Button_Init_Setup = (ImageButton) View_Help.findViewById(R.id.Button_InitSetup);
+        Button_Set_Notification = (ImageButton) View_Help.findViewById(R.id.Button_SetNotification);
+        Button_Replace_Surge = (ImageButton) View_Help.findViewById(R.id.Button_Surge);
 
         //  LedTextView與物件做連結
         LedText_Limit_Energy_Max = (LedTextView) View_Setting.findViewById(R.id.Textview_Energy_Max);
@@ -1342,13 +1362,43 @@ public class MainActivity extends AppCompatActivity {
         Button_Help.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                SetAppView(View_Help);
             }
         });
         Button_Menu_Help.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                SetAppView(View_Help);
+            }
+        });
+        Button_Init_Setup.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Layout_Main.removeAllViews();
+                Layout_Main.addView(View_InitSetup);
+                OpenHelp = true;
+                ZoomImage a = (ZoomImage) View_InitSetup.findViewById(R.id.ZoomImage_initialSetup);
+                a.initUI();
+            }
+        });
+        Button_Set_Notification.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Set Notification")
+                        .setMessage("Coming Soon")
+                        .setNegativeButton("CLOSE", null)
+                        .show();
+            }
+        });
+        Button_Replace_Surge.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Replace Surge Module")
+                        .setMessage("Coming Soon")
+                        .setNegativeButton("CLOSE", null)
+                        .show();
             }
         });
     }
@@ -1635,7 +1685,7 @@ public class MainActivity extends AppCompatActivity {
     private void AlarmDialog(final int NotifyId, String AlarmString) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-        builder.setTitle("Warning")
+        builder.setTitle("WATCHDOG WARNING !")
                 .setMessage(AlarmString)
                 .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
@@ -2162,21 +2212,30 @@ public class MainActivity extends AppCompatActivity {
                     mValue_Watt = 0;
                     mValue_Energy = 0;
                 }
-                mConnected = false;
                 mCurrentConnect = "Empty";
                 ValueMonitor();
+                if (mToast == null) {
+                    mToast = Toast.makeText(MainActivity.this, mConnectDeviceName + " reconnecting", Toast.LENGTH_SHORT);
+                } else {
+                    mToast.setText(mConnectDeviceName + " reconnecting");
+                }
+                mToast.show();
+
+                Log.d("test", "connect Protocol");
                 if (mConnected) {//斷線重連
                     ConnectDevice(mDeviceAddress);
-                    Log.d("test", "connect Protocol");
+                    SystemNotification(1, "Device", mConnectDeviceName + " disconnected");
+                    mConnected = false;
                 }
 
-                if (mToast == null) {
-                    mToast = Toast.makeText(MainActivity.this, mConnectDeviceName + " disconnected", Toast.LENGTH_SHORT);
-                } else {
-                    mToast.setText(mConnectDeviceName + " disconnected");
-                }
-                SystemNotification(1, "Device", mConnectDeviceName + " disconnected");
-                mToast.show();
+//                if (mToast == null) {
+//                    mToast = Toast.makeText(MainActivity.this, mConnectDeviceName + " disconnected", Toast.LENGTH_SHORT);
+//                } else {
+//                    mToast.setText(mConnectDeviceName + " disconnected");
+//                }
+//                mToast.show();
+
+
                 Log.d("test", "Connect Fail");
 
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
@@ -2367,17 +2426,17 @@ public class MainActivity extends AppCompatActivity {
                 Integer.parseInt(Limit_Value_30A.Energy_Max)) {
             if (!mFlag_AlarmEnergy_30A) {
                 mFlag_AlarmEnergy_30A = true;
-                AlarmDialog(NotifiyId, "Over Energy scope!");
+                AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
                 vb.vibrate(2000); //震動
-                SystemNotification(NotifiyId, "Alarm", "Over Energy scope!");
+                SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
             }
             LedText_Value_Energy_30A.setTextColor(Color.rgb(255, 0, 0));
         } else if (!isPage30A && Double.parseDouble(DecimalFormat_Energy.format(mValue_Energy)) >
                 Integer.parseInt(Limit_Value_50A.Energy_Max)){
             if (!mFlag_AlarmEnergy_50A) {
                 mFlag_AlarmEnergy_50A = true;
-                AlarmDialog(NotifiyId, "Over Energy scope!");
-                SystemNotification(NotifiyId, "Alarm", "Over Energy scope!");
+                AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
+                SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
             }
             LedText_Value_Energy_30A.setTextColor(Color.rgb(255, 0, 0));
         } else {
@@ -2405,8 +2464,8 @@ public class MainActivity extends AppCompatActivity {
                         Integer.parseInt(Tmp_Min)) {
             if (!mFlag_AlarmVolt_30A) {
                 mFlag_AlarmVolt_30A = true;
-                AlarmDialog(NotifiyId, "Over Volt scope for 30A!");
-                SystemNotification(NotifiyId, "Alarm", "Over Volt scope for 30A!");
+                AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
+                SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
             }
             LedText_Value_Volt_30A.setTextColor(Color.rgb(255, 0, 0));
         } else {
@@ -2454,8 +2513,8 @@ public class MainActivity extends AppCompatActivity {
                 Integer.parseInt(Tmp_Max)) {
             if (!mFlag_AlarmAmp_30A) {
                 mFlag_AlarmAmp_30A = true;
-                AlarmDialog(NotifiyId, "Over Amp scope for 30A!");
-                SystemNotification(NotifiyId, "Alarm", "Over Amp scope for 30A!");
+                AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
+                SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
             }
             LedText_Value_Amp_30A.setTextColor(Color.rgb(255, 0, 0));
         } else {
@@ -2474,8 +2533,8 @@ public class MainActivity extends AppCompatActivity {
                     Integer.parseInt(Limit_Value_50A.Volt_Min)) {
                 if (!mFlag_AlarmVolt_50A) {
                     mFlag_AlarmVolt_50A = true;
-                    AlarmDialog(NotifiyId, "Over Volt scope for 50A!");
-                    SystemNotification(NotifiyId, "Alarm", "Over Volt scope for 50A!");
+                    AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
+                    SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
                 }
                 LedText_Value_Volt_50A.setTextColor(Color.rgb(255, 0, 0));
             } else {
@@ -2489,8 +2548,8 @@ public class MainActivity extends AppCompatActivity {
             if (Double.parseDouble(DecimalFormat_Amp.format(mValue_Amp_50A)) > Integer.parseInt(Limit_Value_50A.Amp_Max)) {
                 if (!mFlag_AlarmAmp_50A) {
                     mFlag_AlarmAmp_50A = true;
-                    AlarmDialog(NotifiyId, "Over Amp scope for 50A!");
-                    SystemNotification(NotifiyId, "Alarm", "Over Amp scope for 50A!");
+                    AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
+                    SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
                 }
                 LedText_Value_Amp_50A.setTextColor(Color.rgb(255, 0, 0));
             } else {
