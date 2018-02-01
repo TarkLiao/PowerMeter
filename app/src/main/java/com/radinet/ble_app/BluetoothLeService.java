@@ -61,7 +61,7 @@ public class BluetoothLeService extends Service {
  * **/
     public static BluetoothGattCharacteristic mReadCharacteristric = null;
     public static BluetoothGattCharacteristic mWriteCharacteristric = null;
-    public static int mReconnectCount = 0;
+//    public static int mReconnectCount = 0;
     public static final UUID TRANSFER_SERVICE_READ = UUID.fromString("0000FFE0-0000-1000-8000-00805F9B34FB");
     public static final UUID TRANSFER_CHARACTERISTIC_READ = UUID.fromString("0000FFE2-0000-1000-8000-00805F9B34FB");
     public static final UUID TRANSFER_SERVICE_WRITE = UUID.fromString("0000FFF0-0000-1000-8000-00805F9B34FB");
@@ -114,13 +114,13 @@ public class BluetoothLeService extends Service {
                 }
                 mBluetoothGatt.disconnect();
                 mBluetoothGatt.close();
-                mReconnectCount++;
+//                mReconnectCount++;
                 intentAction = ACTION_GATT_DISCONNECTED;
                 broadcastUpdate(intentAction);
                 mConnectionState = STATE_DISCONNECTED;
                 Log.i(TAG, "Disconnected from GATT server.");
 
-                Log.d("mReconnectCount", "" + mReconnectCount);
+//                Log.d("mReconnectCount", "" + mReconnectCount);
             }
             if (status == 133) {
                 close();

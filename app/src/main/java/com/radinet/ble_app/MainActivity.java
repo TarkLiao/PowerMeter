@@ -214,6 +214,12 @@ public class MainActivity extends AppCompatActivity {
     Boolean mFlag_AlarmEnergy_50A = false;
     Boolean mFlag_AlarmVolt_50A = false;
     Boolean mFlag_AlarmAmp_50A = false;
+    private int mFlag_AlarmEnergy_30A_Count = 0;
+    private int mFlag_AlarmVolt_30A_Count = 0;
+    private int mFlag_AlarmAmp_30A_Count = 0;
+    private int mFlag_AlarmEnergy_50A_Count = 0;
+    private int mFlag_AlarmVolt_50A_Count = 0;
+    private int mFlag_AlarmAmp_50A_Count = 0;
 
     /**
      * 相機
@@ -2170,7 +2176,6 @@ public class MainActivity extends AppCompatActivity {
             action = intent.getAction();
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
                 mConnected = true;
-                mBluetoothLeService.mReconnectCount = 0;
                 if (isPage30A) {
                     Log.d("check", "Connect:30A");
                     SetAppView(View_Value_30A);
@@ -2214,12 +2219,12 @@ public class MainActivity extends AppCompatActivity {
                 }
                 mCurrentConnect = "Empty";
                 ValueMonitor();
-                if (mToast == null) {
-                    mToast = Toast.makeText(MainActivity.this, mConnectDeviceName + " reconnecting", Toast.LENGTH_SHORT);
-                } else {
-                    mToast.setText(mConnectDeviceName + " reconnecting");
-                }
-                mToast.show();
+//                if (mToast == null) {
+//                    mToast = Toast.makeText(MainActivity.this, mConnectDeviceName + " reconnecting", Toast.LENGTH_SHORT);
+//                } else {
+//                    mToast.setText(mConnectDeviceName + " reconnecting");
+//                }
+//                mToast.show();
 
                 Log.d("test", "connect Protocol");
                 if (mConnected) {//斷線重連
@@ -2425,23 +2430,31 @@ public class MainActivity extends AppCompatActivity {
         if (isPage30A && Double.parseDouble(DecimalFormat_Energy.format(mValue_Energy)) >
                 Integer.parseInt(Limit_Value_30A.Energy_Max)) {
             if (!mFlag_AlarmEnergy_30A) {
-                mFlag_AlarmEnergy_30A = true;
-                AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
-                vb.vibrate(2000); //震動
-                SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
+                mFlag_AlarmEnergy_30A_Count++;
+                if (mFlag_AlarmEnergy_30A_Count == 6) {
+                    mFlag_AlarmEnergy_30A = true;
+                    AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
+                    vb.vibrate(2000); //震動
+                    SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
+                }
             }
             LedText_Value_Energy_30A.setTextColor(Color.rgb(255, 0, 0));
         } else if (!isPage30A && Double.parseDouble(DecimalFormat_Energy.format(mValue_Energy)) >
                 Integer.parseInt(Limit_Value_50A.Energy_Max)){
             if (!mFlag_AlarmEnergy_50A) {
-                mFlag_AlarmEnergy_50A = true;
-                AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
-                SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
+                mFlag_AlarmEnergy_50A_Count++;
+                if (mFlag_AlarmEnergy_50A_Count == 6) {
+                    mFlag_AlarmEnergy_50A = true;
+                    AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
+                    SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
+                }
             }
             LedText_Value_Energy_30A.setTextColor(Color.rgb(255, 0, 0));
         } else {
             mFlag_AlarmEnergy_30A = false;
+            mFlag_AlarmEnergy_30A_Count = 0;
             mFlag_AlarmEnergy_50A = false;
+            mFlag_AlarmEnergy_50A_Count = 0;
             LedText_Value_Energy_30A.setTextColor(Color.rgb(255, 255, 255));
         }
         LedText_Value_Energy_30A.setText(DecimalFormat_Energy.format(mValue_Energy));
@@ -2463,13 +2476,19 @@ public class MainActivity extends AppCompatActivity {
                 Double.parseDouble(DecimalFormat_Common.format(mValue_Volt_30A)) <
                         Integer.parseInt(Tmp_Min)) {
             if (!mFlag_AlarmVolt_30A) {
-                mFlag_AlarmVolt_30A = true;
-                AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
-                SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
+                Log.d("tark", "mFlag_AlarmVolt_30A_Count:" +mFlag_AlarmVolt_30A_Count);
+                mFlag_AlarmVolt_30A_Count++;
+                if (mFlag_AlarmVolt_30A_Count == 6) {
+                    Log.d("tark", "mFlag_AlarmVolt_30A_Count:trigger");
+                    mFlag_AlarmVolt_30A = true;
+                    AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
+                    SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
+                }
             }
             LedText_Value_Volt_30A.setTextColor(Color.rgb(255, 0, 0));
         } else {
             mFlag_AlarmVolt_30A = false;
+            mFlag_AlarmVolt_30A_Count = 0;
             LedText_Value_Volt_30A.setTextColor(Color.rgb(255, 255, 255));
         }
         LedText_Value_Volt_30A.setText(DecimalFormat_Common.format(mValue_Volt_30A));
@@ -2512,13 +2531,17 @@ public class MainActivity extends AppCompatActivity {
         if (Double.parseDouble(DecimalFormat_Amp.format(mValue_Amp_30A)) >
                 Integer.parseInt(Tmp_Max)) {
             if (!mFlag_AlarmAmp_30A) {
-                mFlag_AlarmAmp_30A = true;
-                AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
-                SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
+                mFlag_AlarmAmp_30A_Count++;
+                if (mFlag_AlarmAmp_30A_Count == 6) {
+                    mFlag_AlarmAmp_30A = true;
+                    AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
+                    SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
+                }
             }
             LedText_Value_Amp_30A.setTextColor(Color.rgb(255, 0, 0));
         } else {
             mFlag_AlarmAmp_30A = false;
+            mFlag_AlarmAmp_30A_Count = 0;
             LedText_Value_Amp_30A.setTextColor(Color.rgb(255, 255, 255));
         }
         LedText_Value_Amp_30A.setText(DecimalFormat_Amp.format(mValue_Amp_30A));
@@ -2532,13 +2555,17 @@ public class MainActivity extends AppCompatActivity {
                     Double.parseDouble(DecimalFormat_Common.format(mValue_Volt_50A)) <
                     Integer.parseInt(Limit_Value_50A.Volt_Min)) {
                 if (!mFlag_AlarmVolt_50A) {
-                    mFlag_AlarmVolt_50A = true;
-                    AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
-                    SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
+                    mFlag_AlarmVolt_50A_Count++;
+                    if (mFlag_AlarmVolt_50A_Count == 6) {
+                        mFlag_AlarmVolt_50A = true;
+                        AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
+                        SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
+                    }
                 }
                 LedText_Value_Volt_50A.setTextColor(Color.rgb(255, 0, 0));
             } else {
                 mFlag_AlarmVolt_50A = false;
+                mFlag_AlarmVolt_50A_Count = 0;
                 LedText_Value_Volt_50A.setTextColor(Color.rgb(255, 255, 255));
             }
             LedText_Value_Volt_50A.setText(DecimalFormat_Common.format(mValue_Volt_50A));
@@ -2547,13 +2574,17 @@ public class MainActivity extends AppCompatActivity {
             NotifiyId = 6;
             if (Double.parseDouble(DecimalFormat_Amp.format(mValue_Amp_50A)) > Integer.parseInt(Limit_Value_50A.Amp_Max)) {
                 if (!mFlag_AlarmAmp_50A) {
-                    mFlag_AlarmAmp_50A = true;
-                    AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
-                    SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
+                    mFlag_AlarmAmp_50A_Count++;
+                    if (mFlag_AlarmAmp_50A_Count == 6) {
+                        mFlag_AlarmAmp_50A = true;
+                        AlarmDialog(NotifiyId, "YOU ARE OUTSIDE YOUR SET LIMIT");
+                        SystemNotification(NotifiyId, "Alarm", "YOU ARE OUTSIDE YOUR SET LIMIT");
+                    }
                 }
                 LedText_Value_Amp_50A.setTextColor(Color.rgb(255, 0, 0));
             } else {
                 mFlag_AlarmAmp_50A = false;
+                mFlag_AlarmAmp_50A_Count = 0;
                 LedText_Value_Amp_50A.setTextColor(Color.rgb(255, 255, 255));
             }
             LedText_Value_Amp_50A.setText(DecimalFormat_Amp.format(mValue_Amp_50A));
