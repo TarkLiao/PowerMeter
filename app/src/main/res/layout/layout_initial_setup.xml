@@ -12,7 +12,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scaleType="fitXY"
-                    app:srcCompat="@drawable/initsetup"
+                    app:srcCompat="@drawable/app_update"
                     android:layout_alignParentTop="true"
                     android:layout_alignParentStart="true" />
         </RelativeLayout>

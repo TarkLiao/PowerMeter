@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -66,6 +67,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -1384,6 +1386,7 @@ public class MainActivity extends AppCompatActivity {
                 Layout_Main.addView(View_InitSetup);
                 OpenHelp = true;
                 ZoomImage a = (ZoomImage) View_InitSetup.findViewById(R.id.ZoomImage_initialSetup);
+                a.setImageBitmap(readBitMap(getApplicationContext(), R.drawable.initsetup));
                 a.initUI();
             }
         });
@@ -1407,6 +1410,15 @@ public class MainActivity extends AppCompatActivity {
                         .show();
             }
         });
+    }
+    public Bitmap readBitMap(Context context, int resId){
+        BitmapFactory.Options opt = new BitmapFactory.Options();
+        opt.inPreferredConfig = Bitmap.Config.RGB_565;
+        opt.inPurgeable = true;
+        opt.inInputShareable = true;
+        //獲取資源圖片
+        InputStream is = context.getResources().openRawResource(resId);
+        return BitmapFactory.decodeStream(is,null,opt);
     }
     /**
      * 確認setting檔案是否存在，存在的話直接讀取值，不存在的話create檔案並給予Default

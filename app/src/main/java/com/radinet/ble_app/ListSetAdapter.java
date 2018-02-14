@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -17,7 +18,7 @@ import java.util.List;
 public class ListSetAdapter  extends BaseAdapter
 {
     private Activity activity;
-    private List<String> mList;
+    private List<String> mList = new ArrayList<>();
 
     private static LayoutInflater inflater = null;
 

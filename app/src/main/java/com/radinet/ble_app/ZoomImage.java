@@ -244,8 +244,12 @@ public class ZoomImage extends android.support.v7.widget.AppCompatImageView {
         private float checkFitScale(float scale, float[] values) {
             if (scale * values[Matrix.MSCALE_X] > mMaxScale)
                 scale = mMaxScale / values[Matrix.MSCALE_X];
-            if (scale * values[Matrix.MSCALE_X] < mMinScale)
-                scale = mMinScale / values[Matrix.MSCALE_X];
+            float FineScale = ((float)imgWidth / (float)intrinsicWidth);
+
+            if (scale * values[Matrix.MSCALE_X] < FineScale)
+                scale = FineScale / values[Matrix.MSCALE_X];
+//            if (scale * values[Matrix.MSCALE_X] < mMinScale)
+//                scale = mMinScale / values[Matrix.MSCALE_X];
             return scale;
         }
 
