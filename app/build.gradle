@@ -7,12 +7,12 @@ android {
         applicationId "com.radinet.ble_app"
         minSdkVersion 21
         targetSdkVersion 23
-        versionName 'v0.0.16'
+        versionName 'v0.0.17'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         ndk {
             abiFilters 'armeabi', 'armeabi-v7a', 'arm64-v8a', 'mips', 'mips64', 'x86', 'x86_64'
         }
-        versionCode 17
+        versionCode 18
     }
     buildTypes {
         release {
@@ -36,6 +36,7 @@ dependencies {
     compile files('libs/zbar-1.0.0.jar')
     compile files('libs/zbar-camera-1.0.0.jar')
     compile 'javax.inject:javax.inject:1'
+    compile 'com.flurry.android:analytics:9.0.0@aar'
 }
 repositories {
     mavenCentral()

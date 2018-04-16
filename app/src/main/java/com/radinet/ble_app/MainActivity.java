@@ -57,6 +57,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.flurry.android.FlurryAgent;
 import com.yanzhenjie.zbar.camera.CameraPreview;
 import com.yanzhenjie.zbar.camera.QrCodeCallback;
 
@@ -359,6 +360,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        new FlurryAgent.Builder()
+                .withLogEnabled(true)
+                .build(this, "MJZ36G8X8CRMXJJ2JJFH");
         /**開啟APP後顯示Logo並等待四秒後關閉**/
         InitAndShowLogo();
 
